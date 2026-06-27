@@ -279,26 +279,68 @@ def ingest_directory(directory: Path) -> dict[str, int]:
 
 # ── Query ──────────────────────────────────────────────────────────────────────
 
+# ── Query ──────────────────────────────────────────────────────────────────────
+
 def _is_allowed(meta: dict, role: str = "admin", category: str | None = None) -> bool:
+    """
+    Check category filter and role-based access.
+
+    Roles:
+    - admin can access everything
+    - manager / employee / intern must be present in allowed_roles metadata
+    """
+
+    # Category filter
     if category and category != "all":
         if meta.get("category") != category:
             return False
 
+    # Admin bypasses role filtering
     if role == "admin":
         return True
 
     allowed_roles = meta.get("allowed_roles", "")
     allowed = [r.strip() for r in allowed_roles.split(",") if r.strip()]
 
-    return role in allowed or "general_engineer" in allowed
+    return role in allowed
 
 
-def query_collection(query: str, n_results: int = 5, role: str = "admin", categories: list[str]  | None = None) -> list[dict]:
+def query_collection(
+    query: str,
+    n_results: int = 5,
+    role: str = "admin",
+    category: str | None = None,
+    categories: list[str] | None = None,
+) -> list[dict]:
+    """
+    Query ChromaDB using semantic search and apply role/category filtering.
+
+    Supports both:
+    - category="mechanics"
+    - categories=["mechanics", "simulation"]
+
+    This avoids crashing when category/categories is None.
+    """
+
     collection = get_collection()
     q_embedding = _embed([query], input_type="search_query")[0]
-    where = None
+
+    # Normalize category input
+    selected_categories: list[str] = []
+
     if categories:
-        where = {"category": {"$in": categories}} if len(categories) > 1 else {"category": categories[0]}
+        selected_categories = [c for c in categories if c and c != "all"]
+    elif category and category != "all":
+        selected_categories = [category]
+
+    # Chroma metadata filter
+    where = None
+
+    if len(selected_categories) == 1:
+        where = {"category": selected_categories[0]}
+    elif len(selected_categories) > 1:
+        where = {"category": {"$in": selected_categories}}
+
     results = collection.query(
         query_embeddings=[q_embedding],
         n_results=max(n_results * 5, 20),
@@ -308,12 +350,14 @@ def query_collection(query: str, n_results: int = 5, role: str = "admin", catego
 
     chunks = []
 
-    for doc, meta, dist in zip(
-        results["documents"][0],
-        results["metadatas"][0],
-        results["distances"][0],
-    ):
-        if not _is_allowed(meta, role=role, category=category):
+    docs = results.get("documents", [[]])[0]
+    metas = results.get("metadatas", [[]])[0]
+    distances = results.get("distances", [[]])[0]
+
+    for doc, meta, dist in zip(docs, metas, distances):
+        meta_category = selected_categories[0] if len(selected_categories) == 1 else None
+
+        if not _is_allowed(meta, role=role, category=meta_category):
             continue
 
         chunks.append(
@@ -321,8 +365,8 @@ def query_collection(query: str, n_results: int = 5, role: str = "admin", catego
                 "text": doc,
                 "source": meta.get("source", ""),
                 "chunk_index": meta.get("chunk_index", 0),
-                "category": meta.get("category", "general"),
-                "allowed_roles": meta.get("allowed_roles", "general_engineer"),
+                "category": meta.get("category", "other"),
+                "allowed_roles": meta.get("allowed_roles", ""),
                 "s3_bucket": meta.get("s3_bucket", ""),
                 "s3_key": meta.get("s3_key", ""),
                 "storage": meta.get("storage", "unknown"),
@@ -388,18 +432,6 @@ def _make_s3_key(path: Path, category: str) -> str:
     safe_name = re.sub(r"[^a-zA-Z0-9_.-]+", "_", path.name)
     return f"{category}/{safe_name}"
 
-def _is_allowed(meta: dict, role: str = "admin", category: str | None = None) -> bool:
-    if category and category != "all":
-        if meta.get("category") != category:
-            return False
-
-    if role == "admin":
-        return True
-
-    allowed_roles = meta.get("allowed_roles", "")
-    allowed = [r.strip() for r in allowed_roles.split(",") if r.strip()]
-
-    return role in allowed
 
 
 def get_categories() -> dict[str, int]:

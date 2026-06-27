@@ -4,6 +4,7 @@ import SourcePanel from "./components/SourcePanel";
 import DocumentSearch from "./components/DocumentSearch";
 import FeedbackBar from "./components/FeedbackBar";
 import GraphView from "./components/GraphView";
+import UploadZone from "./components/UploadZone";
 import AdminView from "./components/AdminView";
 
 type Source = {
@@ -238,18 +239,7 @@ export default function App() {
               ))}
             </select>
 
-            <select
-              value={category}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="bg-gray-800 border border-gray-700 rounded-xl px-3 py-2 text-xs text-gray-300"
-              title="Category filter"
-            >
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+            
           </div>
         </div>
 
@@ -378,6 +368,7 @@ export default function App() {
             role={role}
             category={category}
             searchTriggerRef={docSearchTriggerRef}
+          
           />
         </div>
       )}
