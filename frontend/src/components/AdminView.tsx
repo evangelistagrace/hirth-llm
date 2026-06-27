@@ -118,6 +118,18 @@ function Section({ title, count, children }: { title: string; count: number; chi
 export default function AdminView({ onIngested }: { onIngested: () => void }) {
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState<string | null>(null);
+
+  async function deleteFile(name: string) {
+    if (!confirm(`Remove "${name}" from the index?`)) return;
+    setDeleting(name);
+    try {
+      await fetch(`/api/sources/${encodeURIComponent(name)}`, { method: "DELETE" });
+      reload();
+    } finally {
+      setDeleting(null);
+    }
+  }
 
   function reload() {
     setLoading(true);
@@ -189,6 +201,7 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
                   <th className="text-left px-4 py-2 font-medium">Type</th>
                   <th className="text-left px-4 py-2 font-medium">Category</th>
                   <th className="text-right px-4 py-2 font-medium">Chunks</th>
+                  <th className="px-4 py-2" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -208,6 +221,16 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-right text-textdim font-mono">{f.chunks}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <button
+                        onClick={() => deleteFile(f.name)}
+                        disabled={deleting === f.name}
+                        className="text-warn/60 hover:text-warn disabled:opacity-40 transition text-[10px] font-mono px-2 py-0.5 rounded hover:bg-warn/10"
+                        title="Remove from index"
+                      >
+                        {deleting === f.name ? "…" : "remove"}
+                      </button>
+                    </td>
                   </tr>
                   );
                 })}

@@ -122,6 +122,18 @@ async def admin_data():
     return {"ingest_log": log, "kb_files": kb_files, "feedback": feedback}
 
 
+@app.delete("/sources/{name}")
+async def delete_source(name: str):
+    """Remove all chunks for a given source from ChromaDB."""
+    collection = get_collection()
+    results = collection.get(where={"source": name}, include=["metadatas"])
+    ids = results["ids"]
+    if not ids:
+        raise HTTPException(status_code=404, detail="Source not found in index")
+    collection.delete(ids=ids)
+    return {"deleted": name, "chunks_removed": len(ids)}
+
+
 @app.get("/sources")
 async def list_sources():
     """List all indexed document sources."""
