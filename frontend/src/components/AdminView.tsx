@@ -6,7 +6,8 @@ type LogEntry   = { ts: number; file: string; chunks: number; source: string };
 type KBFile     = { name: string; chunks: number; category?: string };
 type Feedback   = { id: string; ts: number; question: string; answer: string; sources: string[]; rating: number; reason: string | null };
 
-type AdminData  = { ingest_log: LogEntry[]; kb_files: KBFile[]; feedback: Feedback[] };
+type ReviewEntry = { file: string; ts: number; path: string };
+type AdminData  = { ingest_log: LogEntry[]; kb_files: KBFile[]; feedback: Feedback[]; review_queue: ReviewEntry[] };
 
 function DonutChart({ data }: { data: Record<string, number> }) {
   const total = Object.values(data).reduce((a, b) => a + b, 0);
@@ -130,6 +131,27 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [reviewing, setReviewing] = useState<string | null>(null);
+
+  async function approveReview(filename: string) {
+    setReviewing(filename);
+    try {
+      await fetch(`/api/review/${encodeURIComponent(filename)}/approve`, { method: "POST" });
+      reload();
+    } finally {
+      setReviewing(null);
+    }
+  }
+
+  async function dismissReview(filename: string) {
+    setReviewing(filename);
+    try {
+      await fetch(`/api/review/${encodeURIComponent(filename)}`, { method: "DELETE" });
+      reload();
+    } finally {
+      setReviewing(null);
+    }
+  }
 
   async function deleteFile(name: string) {
     if (!confirm(`Remove "${name}" from the index?`)) return;
@@ -197,6 +219,53 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
             <SatisfactionGauge positive={thumbsUp} total={data.feedback.length} />
           </div>
         </div>
+      )}
+
+      {/* ── Under Review ── */}
+      {(data.review_queue?.length ?? 0) > 0 && (
+        <Section title="Under Review" count={data.review_queue.length}>
+          <p className="text-xs text-textdim mb-3">These files already exist in the index. Approve to replace the existing version, or dismiss to discard the upload.</p>
+          <div className="rounded-xl overflow-hidden border border-accent2/30">
+            <table className="w-full text-xs">
+              <thead className="bg-surface2 text-textdim">
+                <tr>
+                  <th className="text-left px-4 py-2 font-medium">File</th>
+                  <th className="text-left px-4 py-2 font-medium">Uploaded</th>
+                  <th className="text-right px-4 py-2 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {data.review_queue.map((entry) => (
+                  <tr key={entry.file} className="hover:bg-surface2/60 transition">
+                    <td className="px-4 py-2.5 text-text font-medium flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent2 shrink-0 inline-block" />
+                      {entry.file}
+                    </td>
+                    <td className="px-4 py-2.5 text-textdim font-mono whitespace-nowrap">{ts(entry.ts)}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => approveReview(entry.file)}
+                          disabled={reviewing === entry.file}
+                          className="text-good/80 hover:text-good disabled:opacity-40 transition text-[10px] font-mono px-2 py-0.5 rounded hover:bg-good/10 border border-good/20"
+                        >
+                          {reviewing === entry.file ? "…" : "approve"}
+                        </button>
+                        <button
+                          onClick={() => dismissReview(entry.file)}
+                          disabled={reviewing === entry.file}
+                          className="text-warn/60 hover:text-warn disabled:opacity-40 transition text-[10px] font-mono px-2 py-0.5 rounded hover:bg-warn/10 border border-warn/20"
+                        >
+                          dismiss
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
       )}
 
       {/* ── Knowledge Base ── */}
