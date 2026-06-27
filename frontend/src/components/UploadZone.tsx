@@ -46,7 +46,7 @@ export default function UploadZone({ onIngested }: Props) {
       <div className="flex gap-2 items-center">
         <label className="text-xs bg-surface2 hover:bg-line text-text px-3 py-1.5 rounded-lg cursor-pointer transition">
           Upload file
-          <input type="file" className="hidden" onChange={handleFile} disabled={loading} />
+          <input type="file" className="hidden" onChange={handleFile} disabled={loading} accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.txt,.md" />
         </label>
         <button
           onClick={ingestSources}
