@@ -145,11 +145,11 @@ export default function App() {
               <div className="flex flex-col items-end gap-1.5 mt-8">
                 <p className="text-xs text-textdim">Try asking…</p>
                 {[
+                  "What is the formula for the effective heat transfer multiplier?",
+                  "What are the differences between MAN and Schnürle scavenging?",
                   "What fuel types are approved for Hirth engines?",
                   "What are the endurance test requirements under FAR 33.49?",
-                  "Wie wird die Schallgeschwindigkeit im Auspuff berechnet?",
-                  "What optimization methods were used in the engine design?",
-                  "What are the key simulation boundary conditions?",
+                  "How do simulation results compare to FAR 33 requirements?",
                 ].map((q) => (
                   <button
                     key={q}
