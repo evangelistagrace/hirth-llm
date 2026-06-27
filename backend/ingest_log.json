@@ -1,0 +1,136 @@
+[
+  {
+    "ts": 1782566050.5408149,
+    "file": "Berechnung Schallgeschwindigkeit im Auspuff.xlsx",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566050.5428905,
+    "file": "Diplomarbeit Auslegung und Optimierung.pdf",
+    "chunks": 100,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566050.5812666,
+    "file": "FAR33.49.pdf",
+    "chunks": 8,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566050.621376,
+    "file": "Formeln aus Youtube.png",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566050.6577454,
+    "file": "Fuel_Kraftstoffe_\u00dcbersicht_Daten.xlsx",
+    "chunks": 5,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566050.6898181,
+    "file": "M\u00f6gliche Werkzeugradien.docx",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566050.7215543,
+    "file": "Simulation_Modelling.pdf",
+    "chunks": 18,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566237.8996081,
+    "file": "FAR33.49.pdf",
+    "chunks": 8,
+    "source": "upload",
+    "category": "mechanics",
+    "allowed_roles": "mechanics_engineer,general_engineer"
+  },
+  {
+    "ts": 1782567672.564483,
+    "file": "Berechnung Schallgeschwindigkeit im Auspuff.xlsx",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567672.5778415,
+    "file": "Diplomarbeit Auslegung und Optimierung.pdf",
+    "chunks": 100,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567672.5867145,
+    "file": "FAR33.49.pdf",
+    "chunks": 8,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567672.5946681,
+    "file": "Formeln aus Youtube.png",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567672.6030242,
+    "file": "Fuel_Kraftstoffe_\u00dcbersicht_Daten.xlsx",
+    "chunks": 5,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567672.6164935,
+    "file": "M\u00f6gliche Werkzeugradien.docx",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567672.6274788,
+    "file": "Simulation_Modelling.pdf",
+    "chunks": 18,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782569484.826001,
+    "file": "Berechnung Schallgeschwindigkeit im Auspuff.xlsx",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782569484.8271832,
+    "file": "Diplomarbeit Auslegung und Optimierung.pdf",
+    "chunks": 100,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782569484.8360841,
+    "file": "FAR33.49.pdf",
+    "chunks": 8,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782569484.84758,
+    "file": "Formeln aus Youtube.png",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782569484.8548617,
+    "file": "Fuel_Kraftstoffe_\u00dcbersicht_Daten.xlsx",
+    "chunks": 5,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782569484.862062,
+    "file": "M\u00f6gliche Werkzeugradien.docx",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782569484.8714359,
+    "file": "Simulation_Modelling.pdf",
+    "chunks": 18,
+    "source": "sources/"
+  }
+]

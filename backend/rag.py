@@ -35,9 +35,19 @@ def _format_context(chunks: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def chat(question: str, history: list[dict] | None = None) -> dict:
+def chat(
+    question: str,
+    history: list[dict] | None = None,
+    role: str = "admin",
+    category: str | None = None,
+) -> dict:
     lang = _detect_lang(question)
-    chunks = query_collection(question, n_results=5)
+    chunks = query_collection(
+    question,
+    n_results=5,
+    role=role,
+    category=category,
+)
     context = _format_context(chunks)
 
     system = SYSTEM_DE if lang == "de" else SYSTEM_EN

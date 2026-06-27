@@ -3,6 +3,7 @@ import json
 import time
 from pathlib import Path
 from typing import Optional
+from s3_service import download_file_from_s3
 
 INGEST_LOG_PATH = Path(__file__).parent / "ingest_log.json"
 
@@ -11,7 +12,7 @@ def _append_log(entry: dict):
     log.append(entry)
     INGEST_LOG_PATH.write_text(json.dumps(log, indent=2))
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -40,6 +41,8 @@ class ChatRequest(BaseModel):
     question: str
     history: Optional[list[dict]] = None
     validate: bool = False
+    role: str = "admin"
+    category: Optional[str] = None
 
 
 class FeedbackRequest(BaseModel):
@@ -62,16 +65,27 @@ class ChatResponse(BaseModel):
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(req: ChatRequest):
-    result = chat(req.question, history=req.history)
+    result = chat(
+        req.question,
+        history=req.history,
+        role=req.role,
+        category=req.category,
+    )
+
     grounding_score = None
+
     if req.validate and result["sources"]:
         grounding_score = validate_answer(result["answer"], result["sources"])
+
     return ChatResponse(
         answer=result["answer"],
         sources=result["sources"],
         lang=result["lang"],
         grounding_score=grounding_score,
-        usage={"input_tokens": result["input_tokens"], "output_tokens": result["output_tokens"]},
+        usage={
+            "input_tokens": result["input_tokens"],
+            "output_tokens": result["output_tokens"],
+        },
     )
 
 
@@ -88,14 +102,39 @@ async def ingest_sources():
 
 
 @app.post("/ingest/upload")
-async def ingest_upload(file: UploadFile = File(...)):
-    """Upload and ingest a single document."""
+async def ingest_upload(
+    file: UploadFile = File(...),
+    category: str = Form("general"),
+    allowed_roles: str = Form("general_engineer"),
+):
     dest = UPLOAD_DIR / file.filename
+
     with dest.open("wb") as f:
         shutil.copyfileobj(file.file, f)
-    count = ingest_file(dest)
-    _append_log({"ts": time.time(), "file": file.filename, "chunks": count, "source": "upload"})
-    return {"file": file.filename, "chunks": count}
+
+    count = ingest_file(
+        dest,
+        category=category,
+        allowed_roles=allowed_roles,
+    )
+
+    _append_log(
+        {
+            "ts": time.time(),
+            "file": file.filename,
+            "chunks": count,
+            "source": "upload",
+            "category": category,
+            "allowed_roles": allowed_roles,
+        }
+    )
+
+    return {
+        "file": file.filename,
+        "chunks": count,
+        "category": category,
+        "allowed_roles": allowed_roles,
+    }
 
 
 @app.get("/admin")
@@ -236,17 +275,41 @@ async def search_documents(q: str, n: int = 10):
 
 
 @app.get("/sources/{name}/download")
-async def download_source(name: str):
-    """Download the original source file by name."""
-    for directory in [SOURCES_DIR, UPLOAD_DIR]:
-        path = directory / name
-        if path.exists() and path.is_file():
-            return FileResponse(
-                path=str(path),
-                filename=name,
-                media_type="application/octet-stream",
+async def download_source(name: str, role: str = "admin"):
+    collection = get_collection()
+    result = collection.get(where={"source": name}, include=["metadatas"])
+
+    if not result["metadatas"]:
+        raise HTTPException(status_code=404, detail=f"File '{name}' not found in index")
+
+    meta = result["metadatas"][0]
+
+    if role != "admin":
+        allowed_roles = meta.get("allowed_roles", "")
+        roles = [r.strip() for r in allowed_roles.split(",") if r.strip()]
+
+        if role not in roles and "general_engineer" not in roles:
+            raise HTTPException(
+                status_code=403,
+                detail="You do not have access to this document",
             )
-    raise HTTPException(status_code=404, detail=f"File '{name}' not found")
+
+    s3_key = meta.get("s3_key")
+
+    if not s3_key:
+        raise HTTPException(
+            status_code=404,
+            detail="S3 object key not found for this document",
+        )
+
+    cached_path = UPLOAD_DIR / "s3_cache" / name
+    download_file_from_s3(s3_key, cached_path)
+
+    return FileResponse(
+        path=str(cached_path),
+        filename=name,
+        media_type="application/octet-stream",
+    )
 
 
 @app.get("/sources/{name}/summary")

@@ -1,0 +1,6 @@
+services:
+  floci:
+    image: floci/floci:latest
+    container_name: hirth_floci
+    ports:
+      - "4566:4566"

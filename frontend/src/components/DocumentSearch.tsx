@@ -7,6 +7,11 @@ type DocResult = {
   score: number;
   snippet: string;
   title_match?: boolean;
+  category?: string;
+  allowed_roles?: string;
+  s3_bucket?: string;
+  s3_key?: string;
+  storage?: string;
 };
 
 type Props = {
@@ -17,8 +22,29 @@ type Props = {
   setResults: (r: DocResult[]) => void;
   searched: boolean;
   setSearched: (s: boolean) => void;
+
+  role: string;
+  category: string;
   searchTriggerRef?: React.MutableRefObject<(() => void) | null>;
 };
+
+const roles = [
+  "admin",
+  "general_engineer",
+  "mechanics_engineer",
+  "electrics_engineer",
+  "simulation_engineer",
+  "software_engineer",
+];
+
+const categories = [
+  "all",
+  "general",
+  "mechanics",
+  "electrics",
+  "simulation",
+  "software",
+];
 
 function fileType(name: string) {
   return name.split(".").pop()?.toUpperCase() ?? "FILE";
@@ -26,12 +52,18 @@ function fileType(name: string) {
 
 function ScoreBadge({ score }: { score: number }) {
   const pct = Math.round(score * 100);
+
   const color =
-    pct >= 70 ? "bg-emerald-900/50 text-emerald-300" :
-    pct >= 45 ? "bg-yellow-900/50 text-yellow-300" :
-                "bg-gray-700 text-gray-400";
+    pct >= 70
+      ? "bg-emerald-900/50 text-emerald-300"
+      : pct >= 45
+      ? "bg-yellow-900/50 text-yellow-300"
+      : "bg-gray-700 text-gray-400";
+
   return (
-    <div className={`flex flex-col items-center px-3 py-1.5 rounded-xl ${color} min-w-[56px]`}>
+    <div
+      className={`flex flex-col items-center px-3 py-1.5 rounded-xl ${color} min-w-[56px]`}
+    >
       <span className="text-lg font-bold leading-none">{pct}%</span>
       <span className="text-[10px] mt-0.5 opacity-70">match</span>
     </div>
@@ -40,28 +72,51 @@ function ScoreBadge({ score }: { score: number }) {
 
 export default function DocumentSearch({
   onAskAbout,
-  query, setQuery,
-  results, setResults,
-  searched, setSearched,
+  query,
+  setQuery,
+  results,
+  setResults,
+  searched,
+  setSearched,
+  role,
+  category,
   searchTriggerRef,
 }: Props) {
   const [searching, setSearching] = useState(false);
-
-  useEffect(() => {
-    if (searchTriggerRef) searchTriggerRef.current = search;
-  });
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [loadingSummary, setLoadingSummary] = useState<string | null>(null);
+
   const tokens = extractTokens(query);
+
+  useEffect(() => {
+    if (searchTriggerRef) {
+      searchTriggerRef.current = search;
+    }
+  });
 
   async function search() {
     if (!query.trim()) return;
+
     setSearching(true);
     setSearched(false);
+
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&n=10`);
+      const params = new URLSearchParams({
+        q: query,
+        n: "10",
+        role,
+        category,
+      });
+
+      const res = await fetch(`/api/search?${params.toString()}`);
+
+      if (!res.ok) {
+        throw new Error("Search failed");
+      }
+
       const data = await res.json();
-      setResults(data.results);
+
+      setResults(data.results ?? []);
       setSearched(true);
     } finally {
       setSearching(false);
@@ -70,11 +125,29 @@ export default function DocumentSearch({
 
   async function loadSummary(name: string) {
     if (summaries[name]) return;
+
     setLoadingSummary(name);
+
     try {
-      const res = await fetch(`/api/sources/${encodeURIComponent(name)}/summary`);
+      const params = new URLSearchParams({
+        role,
+        category,
+      });
+
+      const res = await fetch(
+        `/api/sources/${encodeURIComponent(name)}/summary?${params.toString()}`
+      );
+
+      if (!res.ok) {
+        throw new Error("Summary failed");
+      }
+
       const data = await res.json();
-      setSummaries((prev) => ({ ...prev, [name]: data.summary }));
+
+      setSummaries((prev) => ({
+        ...prev,
+        [name]: data.summary,
+      }));
     } finally {
       setLoadingSummary(null);
     }
@@ -82,108 +155,179 @@ export default function DocumentSearch({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Search bar */}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          className="flex-1 bg-gray-800 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
-          placeholder='e.g. "fuel mixture adjustment" or FAR33'
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && search()}
-        />
-        <button
-          onClick={search}
-          disabled={searching || !query.trim()}
-          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 py-3 rounded-xl text-sm font-medium transition shrink-0"
-        >
-          {searching ? "Searching…" : "Search"}
-        </button>
+      <div className="bg-gray-800/50 border border-gray-700/50 rounded-2xl p-4 space-y-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-sm font-semibold text-gray-100">
+              Document Retrieval
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Results are filtered by role, category, and S3-backed metadata.
+            </p>
+          </div>
+
+          <div className="flex gap-2 flex-wrap">
+            
+
+            
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            className="flex-1 bg-gray-900 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
+            placeholder='e.g. "fuel mixture adjustment" or FAR33'
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && search()}
+          />
+
+          <button
+            onClick={search}
+            disabled={searching || !query.trim()}
+            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 py-3 rounded-xl text-sm font-medium transition shrink-0"
+          >
+            {searching ? "Searching…" : "Search"}
+          </button>
+        </div>
       </div>
 
-      {/* Results */}
       {searched && (
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-100">Document Results</h2>
-            <span className="text-sm text-gray-500">{results.length} result{results.length !== 1 ? "s" : ""}</span>
+            <h2 className="text-base font-semibold text-gray-100">
+              Document Results
+            </h2>
+
+            <span className="text-sm text-gray-500">
+              {results.length} accessible result
+              {results.length !== 1 ? "s" : ""}
+            </span>
           </div>
 
           {results.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-12">No matching documents found.</p>
+            <div className="text-center py-12 bg-gray-800/40 border border-gray-700/40 rounded-2xl">
+              <p className="text-sm text-gray-400">
+                No accessible matching documents found.
+              </p>
+              <p className="text-xs text-gray-600 mt-1">
+                Try admin role, all category, or a different query.
+              </p>
+            </div>
           ) : (
             <div className="flex flex-col gap-4">
               {results.map((doc) => (
-                <div key={doc.source} className="bg-gray-800/60 border border-gray-700/50 rounded-2xl p-5">
-                  {/* Title row */}
+                <div
+                  key={`${doc.source}-${doc.s3_key ?? ""}`}
+                  className="bg-gray-800/60 border border-gray-700/50 rounded-2xl p-5"
+                >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-gray-100 break-words">{doc.source}</h3>
-                      <div className="flex items-center gap-2 mt-1.5">
+                      <h3 className="text-sm font-semibold text-gray-100 break-words">
+                        {doc.source}
+                      </h3>
+
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <span className="text-[11px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded-md font-medium">
                           {fileType(doc.source)}
                         </span>
+
+                        {doc.category && (
+                          <span className="text-[11px] bg-blue-900/60 text-blue-300 px-2 py-0.5 rounded-md font-medium">
+                            {doc.category}
+                          </span>
+                        )}
+
+                        {doc.storage && (
+                          <span className="text-[11px] bg-purple-900/60 text-purple-300 px-2 py-0.5 rounded-md font-medium">
+                            {doc.storage}
+                          </span>
+                        )}
+
                         {doc.title_match && (
                           <span className="text-[11px] bg-indigo-900/60 text-indigo-300 px-2 py-0.5 rounded-md font-medium">
                             title match
                           </span>
                         )}
                       </div>
+
+                      {doc.s3_key && (
+                        <p className="text-[11px] text-gray-500 mt-2 break-all">
+                          S3: {doc.s3_bucket ? `${doc.s3_bucket}/` : ""}
+                          {doc.s3_key}
+                        </p>
+                      )}
+
+                      {doc.allowed_roles && (
+                        <p className="text-[11px] text-gray-500 mt-1 break-all">
+                          Access: {doc.allowed_roles}
+                        </p>
+                      )}
                     </div>
+
                     <ScoreBadge score={doc.score} />
                   </div>
 
-                  {/* Snippet */}
                   <blockquote className="mt-4 border-l-2 border-indigo-500 pl-3 text-sm text-gray-400 leading-relaxed italic">
                     <Highlighted
-                      text={doc.snippet.trim().replace(/\s+/g, " ") + (doc.snippet.length >= 300 ? "…" : "")}
+                      text={
+                        doc.snippet.trim().replace(/\s+/g, " ") +
+                        (doc.snippet.length >= 300 ? "…" : "")
+                      }
                       tokens={tokens}
                     />
                   </blockquote>
 
-                  {/* Summary */}
                   {summaries[doc.source] && (
                     <div className="mt-3 text-xs text-gray-300 bg-gray-900/50 rounded-xl px-4 py-3 leading-relaxed whitespace-pre-wrap">
                       <Highlighted text={summaries[doc.source]} tokens={tokens} />
                     </div>
                   )}
+
                   {loadingSummary === doc.source && (
-                    <p className="mt-3 text-xs text-gray-500 animate-pulse">Generating summary…</p>
+                    <p className="mt-3 text-xs text-gray-500 animate-pulse">
+                      Generating summary…
+                    </p>
                   )}
 
-                  {/* Actions */}
                   <div className="flex gap-2 mt-4 flex-wrap">
                     <a
-                      href={`/api/sources/${encodeURIComponent(doc.source)}/download`}
+                      href={`/api/sources/${encodeURIComponent(
+                        doc.source
+                      )}/download?role=${encodeURIComponent(role)}`}
                       download={doc.source}
                       className="text-xs border border-gray-600 hover:border-indigo-500 hover:text-indigo-300 text-gray-300 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
                       View Document
                     </a>
+
                     <button
                       onClick={() => loadSummary(doc.source)}
-                      disabled={!!summaries[doc.source] || loadingSummary === doc.source}
+                      disabled={
+                        !!summaries[doc.source] ||
+                        loadingSummary === doc.source
+                      }
                       className="text-xs border border-gray-600 hover:border-indigo-500 hover:text-indigo-300 text-gray-300 px-3 py-1.5 rounded-lg transition disabled:opacity-40 flex items-center gap-1.5"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
                       {summaries[doc.source] ? "Summary loaded" : "Summarize"}
                     </button>
+
                     <button
-                      onClick={() => onAskAbout(`What does ${doc.source} say about: ${query}`)}
+                      onClick={() =>
+                        onAskAbout(`What does ${doc.source} say about: ${query}`)
+                      }
                       className="text-xs border border-gray-600 hover:border-indigo-500 hover:text-indigo-300 text-gray-300 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
                     >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                      </svg>
                       Ask Chat
                     </button>
                   </div>
-                  <FeedbackBar mode="document" question={query} source={doc.source} />
+
+                  <FeedbackBar
+                    mode="document"
+                    question={query}
+                    source={doc.source}
+                  />
                 </div>
               ))}
             </div>
@@ -191,9 +335,7 @@ export default function DocumentSearch({
         </div>
       )}
 
-      {!searched && !searching && (
-        <div className="py-10" />
-      )}
+      {!searched && !searching && <div className="py-10" />}
     </div>
   );
 }
