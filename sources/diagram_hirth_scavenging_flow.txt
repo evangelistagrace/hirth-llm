@@ -1,0 +1,5 @@
+Cross-section scavenging flow diagram showing Auslaßventil (exhaust valve) at top
+and Einlaßschlitze (intake slots) on cylinder wall. Red arrows illustrate the
+loopscavenging or uniflow scavenging pattern inside the cylinder and combustion chamber.
+Piston and ring detail shown in lower cross-section view.
+Keywords: Spülung, Ladungsbewegung, Einlaßschlitze, Auslaßventil, Strömungspfeil.

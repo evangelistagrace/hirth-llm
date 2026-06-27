@@ -49,6 +49,7 @@ function ScoreBadge({ score }: { score: number }) {
   );
 }
 
+
 function CategoryBadge({ category }: { category: string }) {
   const cls = CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other;
   return (
@@ -89,7 +90,28 @@ export default function DocumentSearch({
       if (activeCats.size > 0) url += `&categories=${[...activeCats].join(",")}`;
       const res = await fetch(url);
       const data = await res.json();
-      setResults(data.results);
+      // Convert diagram .txt results to .png display; deduplicate if both appear
+      const seen = new Set<string>();
+      const merged: DocResult[] = [];
+      for (const r of data.results as DocResult[]) {
+        const isDiagramTxt = r.source.startsWith("diagram_") && r.source.endsWith(".txt");
+        const isDiagramPng = r.source.startsWith("diagram_") && r.source.endsWith(".png");
+        const stem = isDiagramTxt
+          ? r.source.replace(/\.txt$/, "")
+          : isDiagramPng
+          ? r.source.replace(/\.png$/, "")
+          : null;
+
+        if (stem) {
+          if (seen.has(stem)) continue; // deduplicate
+          seen.add(stem);
+          // always present as .png
+          merged.push({ ...r, source: `${stem}.png` });
+        } else {
+          merged.push(r);
+        }
+      }
+      setResults(merged);
       setSearched(true);
     } finally {
       setSearching(false);
@@ -204,6 +226,16 @@ export default function DocumentSearch({
                       tokens={tokens}
                     />
                   </blockquote>
+
+                  {/* Image preview — directly for .png, or paired for diagram .txt */}
+                  {doc.source.startsWith("diagram_") && doc.source.endsWith(".png") && (
+                    <img
+                      src={`/api/sources/${encodeURIComponent(doc.source)}/download`}
+                      className="mt-4 rounded-xl max-h-72 object-contain bg-gray-900/50 w-full"
+                      alt={doc.source.replace(/\.png$/, "")}
+                      onError={(e) => (e.currentTarget.style.display = "none")}
+                    />
+                  )}
 
                   {/* Summary */}
                   {summaries[doc.source] && (

@@ -1,0 +1,4 @@
+Four-cylinder two-stroke engine operating cycle diagram showing all four cylinders
+in different phases simultaneously: intake, compression, power, and exhaust strokes.
+Illustrates gas flow and piston positions across the complete engine firing sequence.
+Hirth opposed or inline multi-cylinder two-stroke configuration.
