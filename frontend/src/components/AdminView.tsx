@@ -70,26 +70,28 @@ function HBarChart({ data }: { data: Record<string, number> }) {
 
 function SatisfactionGauge({ positive, total }: { positive: number; total: number }) {
   const pct = total === 0 ? 0 : Math.round((positive / total) * 100);
-  const r = 40; const cx = 60; const cy = 60;
-  const arc = Math.PI * r;
+  const r = 36; const cx = 60; const cy = 58;
+  const circumference = Math.PI * r; // half circle
+  const filled = (pct / 100) * circumference;
   const color = pct >= 70 ? "#5FAE7C" : pct >= 40 ? "#3878C8" : "#C25450";
-  const toXY = (angle: number) => ({
-    x: cx + r * Math.cos(angle),
-    y: cy + r * Math.sin(angle),
-  });
-  const startAngle = Math.PI;
-  const endAngle = Math.PI + (pct / 100) * Math.PI;
-  const s = toXY(startAngle); const e = toXY(endAngle);
-  const largeArc = pct > 50 ? 1 : 0;
   return (
-    <div className="flex flex-col items-center gap-1">
-      <svg width={120} height={72} viewBox="0 0 120 72">
-        <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`} fill="none" stroke="#2D5A90" strokeWidth={12} />
+    <div className="flex flex-col items-center gap-2">
+      <svg width={120} height={70} viewBox="0 0 120 70">
+        {/* track */}
+        <path
+          d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
+          fill="none" stroke="#1E3A5F" strokeWidth={10} strokeLinecap="round"
+        />
+        {/* fill */}
         {pct > 0 && (
-          <path d={`M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`} fill="none" stroke={color} strokeWidth={12} strokeLinecap="round" />
+          <path
+            d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
+            fill="none" stroke={color} strokeWidth={10} strokeLinecap="round"
+            strokeDasharray={`${filled} ${circumference}`}
+          />
         )}
-        <text x={cx} y={cy - 4} textAnchor="middle" fill={color} fontSize={18} fontWeight="bold">{pct}%</text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fill="#6B86A8" fontSize={9}>satisfaction</text>
+        <text x={cx} y={cy - 6} textAnchor="middle" fill={color} fontSize={17} fontWeight="bold">{pct}%</text>
+        <text x={cx} y={cy + 8} textAnchor="middle" fill="#6B86A8" fontSize={9}>satisfaction</text>
       </svg>
       <div className="flex gap-4 text-xs">
         <span className="text-good">👍 {positive}</span>

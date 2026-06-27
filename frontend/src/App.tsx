@@ -149,9 +149,8 @@ export default function App() {
                 {[
                   "What is the formula for the effective heat transfer multiplier?",
                   "What are the differences between MAN and Schnürle scavenging?",
-                  "What fuel types are approved for Hirth engines?",
+                  "What are the GT-Power simulation boundary conditions?",
                   "What are the endurance test requirements under FAR 33.49?",
-                  "How do simulation results compare to FAR 33 requirements?",
                 ].map((q) => (
                   <button
                     key={q}
