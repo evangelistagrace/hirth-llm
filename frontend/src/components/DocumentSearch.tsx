@@ -182,14 +182,14 @@ export default function DocumentSearch({
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-text">Document Results</h2>
-            <span className="text-sm text-textdim font-mono">{results.length} result{results.length !== 1 ? "s" : ""}</span>
+            <span className="text-sm text-textdim font-mono">{(() => { const n = results[0]?.title_match && results[0]?.score >= 0.99 ? 1 : results.length; return `${n} result${n !== 1 ? "s" : ""}`; })()}</span>
           </div>
 
           {results.length === 0 ? (
             <p className="text-sm text-textdim text-center py-12">No matching documents found.</p>
           ) : (
             <div className="flex flex-col gap-4">
-              {results.map((doc) => (
+              {(results[0]?.title_match && results[0]?.score >= 0.99 ? results.slice(0, 1) : results).map((doc) => (
                 <div key={doc.source} className="bg-surface border border-line rounded-2xl p-5">
                   {/* Title row */}
                   <div className="flex items-start justify-between gap-4">

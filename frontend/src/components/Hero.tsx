@@ -58,11 +58,11 @@ export default function Hero({ sourceCount }: Props) {
             </span>
 
             <span className="block text-[55px] sm:text-[70px] font-extrabold text-[#3D84E6]">
-              ENGINE
+              DOCUMENT
             </span>
 
             <span className="block text-[40px] sm:text-[56px] font-extrabold text-white">
-              KNOWLEDGE
+              INTELLIGENCE
             </span>
           </h1>
           <p className="text-sm text-textdim mt-2 max-w-md">

@@ -16,7 +16,11 @@ export default function UploadZone({ onIngested }: Props) {
     try {
       const res = await fetch("/api/ingest/upload", { method: "POST", body: form });
       const data = await res.json();
-      setStatus(`${data.file}: ${data.chunks} chunks indexed`);
+      if (data.status === "duplicate") {
+        setStatus(`⚠️ ${data.message}`);
+      } else {
+        setStatus(`${data.file}: ${data.chunks} chunks indexed`);
+      }
       onIngested();
     } catch {
       setStatus("Upload failed.");

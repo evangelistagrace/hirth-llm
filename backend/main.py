@@ -5,6 +5,13 @@ from pathlib import Path
 from typing import Optional
 
 INGEST_LOG_PATH = Path(__file__).parent / "ingest_log.json"
+REVIEW_QUEUE_PATH = Path(__file__).parent / "review_queue.json"
+
+def _read_review_queue() -> list[dict]:
+    return json.loads(REVIEW_QUEUE_PATH.read_text()) if REVIEW_QUEUE_PATH.exists() else []
+
+def _write_review_queue(queue: list[dict]):
+    REVIEW_QUEUE_PATH.write_text(json.dumps(queue, indent=2))
 
 def _append_log(entry: dict):
     log = json.loads(INGEST_LOG_PATH.read_text()) if INGEST_LOG_PATH.exists() else []
@@ -89,13 +96,68 @@ async def ingest_sources():
 
 @app.post("/ingest/upload")
 async def ingest_upload(file: UploadFile = File(...)):
-    """Upload and ingest a single document."""
+    """Upload and ingest a single document. Flags duplicates for review."""
+    collection = get_collection()
+    existing = collection.get(where={"source": file.filename}, include=["metadatas"])
+    if existing["ids"]:
+        # Duplicate — save file and add to review queue
+        dest = UPLOAD_DIR / file.filename
+        with dest.open("wb") as f:
+            shutil.copyfileobj(file.file, f)
+        queue = _read_review_queue()
+        queue = [q for q in queue if q["file"] != file.filename]  # replace if already queued
+        queue.append({"file": file.filename, "ts": time.time(), "path": str(dest)})
+        _write_review_queue(queue)
+        return {"file": file.filename, "chunks": 0, "status": "duplicate", "message": f'"{file.filename}" already exists — added to review queue.'}
     dest = UPLOAD_DIR / file.filename
     with dest.open("wb") as f:
         shutil.copyfileobj(file.file, f)
     count = ingest_file(dest)
     _append_log({"ts": time.time(), "file": file.filename, "chunks": count, "source": "upload"})
-    return {"file": file.filename, "chunks": count}
+    return {"file": file.filename, "chunks": count, "status": "indexed"}
+
+
+@app.get("/review")
+async def list_review():
+    return {"queue": _read_review_queue()}
+
+
+@app.post("/review/{filename}/approve")
+async def approve_review(filename: str):
+    """Re-index a file from the review queue, replacing the old version."""
+    queue = _read_review_queue()
+    entry = next((q for q in queue if q["file"] == filename), None)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Not in review queue")
+    path = Path(entry["path"])
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Uploaded file not found on disk")
+    # Remove old chunks
+    collection = get_collection()
+    old = collection.get(where={"source": filename}, include=["metadatas"])
+    if old["ids"]:
+        collection.delete(ids=old["ids"])
+    # Re-index
+    count = ingest_file(path)
+    _append_log({"ts": time.time(), "file": filename, "chunks": count, "source": "review/approve"})
+    # Remove from queue
+    _write_review_queue([q for q in queue if q["file"] != filename])
+    return {"file": filename, "chunks": count}
+
+
+@app.delete("/review/{filename}")
+async def dismiss_review(filename: str):
+    """Dismiss a file from the review queue without re-indexing."""
+    queue = _read_review_queue()
+    entry = next((q for q in queue if q["file"] == filename), None)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Not in review queue")
+    _write_review_queue([q for q in queue if q["file"] != filename])
+    # Clean up uploaded file
+    path = Path(entry["path"])
+    if path.exists():
+        path.unlink()
+    return {"dismissed": filename}
 
 
 @app.get("/admin")
@@ -119,7 +181,21 @@ async def admin_data():
     # feedback
     feedback = get_all_feedback()
 
-    return {"ingest_log": log, "kb_files": kb_files, "feedback": feedback}
+    review_queue = _read_review_queue()
+
+    return {"ingest_log": log, "kb_files": kb_files, "feedback": feedback, "review_queue": review_queue}
+
+
+@app.delete("/sources/{name}")
+async def delete_source(name: str):
+    """Remove all chunks for a given source from ChromaDB."""
+    collection = get_collection()
+    results = collection.get(where={"source": name}, include=["metadatas"])
+    ids = results["ids"]
+    if not ids:
+        raise HTTPException(status_code=404, detail="Source not found in index")
+    collection.delete(ids=ids)
+    return {"deleted": name, "chunks_removed": len(ids)}
 
 
 @app.get("/sources")

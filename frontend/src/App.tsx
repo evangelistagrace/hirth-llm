@@ -19,21 +19,54 @@ type Message = {
   question?: string;
 };
 
+const TABS = ["docs", "chat", "graph", "admin"] as const;
+type Tab = typeof TABS[number];
+
+const TAB_LABELS: Record<Tab, string> = {
+  docs: "Documents", chat: "Chat", graph: "Graph", admin: "Admin",
+};
+
+function TabBar({ view, onSwitch }: { view: Tab; onSwitch: (v: Tab) => void }) {
+  return (
+    <div className="border-b border-line bg-surface/95 backdrop-blur z-50 shrink-0">
+      <div className="max-w-3xl mx-auto px-4 py-3">
+        <div className="flex justify-center">
+        <div className="flex bg-surface2 rounded-xl p-1 text-sm w-fit">
+          {TABS.map((v) => (
+            <button
+              key={v}
+              onClick={() => onSwitch(v)}
+              className={`px-4 py-1.5 rounded-lg transition font-medium ${
+                view === v ? "bg-accent text-bg shadow" : "text-textdim hover:text-text"
+              }`}
+            >
+              {TAB_LABELS[v]}
+            </button>
+          ))}
+        </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [view, setView] = useState<"chat" | "docs" | "graph" | "admin">("docs");
-  const [showHero, setShowHero] = useState(true);
+  const [view, setView] = useState<Tab>("docs");
   const [loading, setLoading] = useState(false);
   const [validate, setValidate] = useState(false);
   const [sourceCount, setSourceCount] = useState<number | null>(null);
 
-  // Lifted doc search state so it survives tab switches
   type DocResult = { source: string; score: number; snippet: string; title_match?: boolean; category?: string };
   const [docQuery, setDocQuery] = useState("");
   const [docResults, setDocResults] = useState<DocResult[]>([]);
   const [docSearched, setDocSearched] = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
+  const docSearchTriggerRef = useRef<(() => void) | null>(null);
+  const scrollPos = useRef<Partial<Record<Tab, number>>>({});
+  const pageScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -43,8 +76,7 @@ export default function App() {
     try {
       const res = await fetch("/api/sources");
       const data = await res.json();
-      const total = data.sources.reduce((s: number, d: { chunks: number }) => s + d.chunks, 0);
-      setSourceCount(total);
+      setSourceCount(data.sources.reduce((s: number, d: { chunks: number }) => s + d.chunks, 0));
     } catch { /* ignore */ }
   }
 
@@ -57,9 +89,7 @@ export default function App() {
     setView("chat");
     setMessages((prev) => [...prev, { role: "user", content: q }]);
     setLoading(true);
-
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
-
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -67,21 +97,15 @@ export default function App() {
         body: JSON.stringify({ question: q, history, validate }),
       });
       const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: data.answer,
-          sources: data.sources,
-          groundingScore: data.grounding_score,
-          question: q,
-        },
-      ]);
+      setMessages((prev) => [...prev, {
+        role: "assistant",
+        content: data.answer,
+        sources: data.sources,
+        groundingScore: data.grounding_score,
+        question: q,
+      }]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "Error: could not reach the server." },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Error: could not reach the server." }]);
     } finally {
       setLoading(false);
     }
@@ -93,7 +117,13 @@ export default function App() {
     setTimeout(() => send(q), 50);
   }
 
-  const docSearchTriggerRef = useRef<(() => void) | null>(null);
+  function switchTab(next: Tab) {
+    if (view !== "chat") scrollPos.current[view] = pageScrollRef.current?.scrollTop ?? 0;
+    setView(next);
+    requestAnimationFrame(() => {
+      pageScrollRef.current?.scrollTo({ top: scrollPos.current[next] ?? 0, behavior: "instant" });
+    });
+  }
 
   function handleGraphNodeClick(name: string) {
     const term = name.replace(/\.[^.]+$/, "");
@@ -101,50 +131,37 @@ export default function App() {
     setDocResults([]);
     setDocSearched(false);
     setView("docs");
-    // trigger search after the docs view renders
     setTimeout(() => docSearchTriggerRef.current?.(), 50);
   }
 
-  return (
-    <div className="min-h-screen bg-bg flex flex-col">
+  // ── Chat layout (fully self-contained, no hero) ──────────────────────────────
+  if (view === "chat") {
+    return (
+      <div className="h-screen bg-bg flex flex-col overflow-hidden">
+        <TabBar view={view} onSwitch={switchTab} />
 
-      {/* ── Hero ── */}
-      <div
-        className={`overflow-hidden transition-all duration-700 ${
-          showHero ? "max-h-[75vh] opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <Hero sourceCount={sourceCount} />
-      </div>
-
-      <div className="border-b border-line bg-surface shrink-0">
-        <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex bg-surface2 rounded-xl p-1 text-sm w-fit">
-            {(["docs", "chat", "graph", "admin"] as const).map((v) => (
-              <button
-                key={v}
-                onClick={() => {
-                  setShowHero(false);
-                  setView(v);
-                  }}
-                className={`px-4 py-1.5 rounded-lg transition font-medium capitalize ${
-                  view === v ? "bg-accent text-bg shadow" : "text-textdim hover:text-text"
-                }`}
-              >
-                {v === "docs" ? "Documents" : v === "graph" ? "Graph" : v === "admin" ? "Admin" : "Chat"}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1">
-        <div className="max-w-3xl mx-auto px-4">
-
-      {/* ── Chat view ── */}
-      {view === "chat" && (
-        <>
-          <div className="py-6 space-y-6">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+            {messages.length === 0 && (
+              <div className="flex flex-col items-end gap-1.5 mt-8">
+                <p className="text-xs text-textdim">Try asking…</p>
+                {[
+                  "What is the formula for the effective heat transfer multiplier?",
+                  "What are the differences between MAN and Schnürle scavenging?",
+                  "What are the GT-Power simulation boundary conditions?",
+                  "What are the endurance test requirements under FAR 33.49?",
+                ].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => send(q)}
+                    className="text-xs text-textdim bg-surface2 hover:bg-line border border-line hover:border-accent/50 hover:text-accent2 px-3 py-1.5 rounded-xl transition text-right"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
             {messages.map((msg, i) => (
               <div key={i} className={msg.role === "user" ? "flex justify-end" : ""}>
                 {msg.role === "user" ? (
@@ -157,19 +174,10 @@ export default function App() {
                       <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown>
                     </div>
                     {msg.sources && (
-                      <SourcePanel
-                        sources={msg.sources}
-                        groundingScore={msg.groundingScore ?? null}
-                        query={msg.question}
-                      />
+                      <SourcePanel sources={msg.sources} groundingScore={msg.groundingScore ?? null} query={msg.question} />
                     )}
                     {msg.question && (
-                      <FeedbackBar
-                        mode="answer"
-                        question={msg.question}
-                        answer={msg.content}
-                        sources={msg.sources ?? []}
-                      />
+                      <FeedbackBar mode="answer" question={msg.question} answer={msg.content} sources={msg.sources ?? []} />
                     )}
                   </div>
                 )}
@@ -184,66 +192,11 @@ export default function App() {
             )}
             <div ref={bottomRef} />
           </div>
-        </>
-      )}
-
-      {/* ── Documents view ── */}
-      {view === "docs" && (
-        <div className="py-6">
-          <DocumentSearch
-            onAskAbout={handleAskAbout}
-            query={docQuery}
-            setQuery={setDocQuery}
-            results={docResults}
-            setResults={setDocResults}
-            searched={docSearched}
-            setSearched={setDocSearched}
-            searchTriggerRef={docSearchTriggerRef}
-          />
         </div>
-      )}
 
-      {/* ── Admin view ── */}
-      {view === "admin" && (
-        <div className="py-6">
-          <AdminView onIngested={fetchSourceCount} />
-        </div>
-      )}
-
-      {/* ── Graph view ── */}
-      {view === "graph" && (
-        <div className="py-6 flex flex-col" style={{ height: "calc(100vh - 120px)" }}>
-          <GraphView onSelectDocument={handleGraphNodeClick} />
-        </div>
-      )}
-        </div>
-      </div>
-
-      {/* ── Composer (chat view only) ── */}
-      {view === "chat" && (
+        {/* Composer */}
         <div className="border-t border-line bg-surface shrink-0">
-          <div className="max-w-3xl mx-auto px-4 py-4 space-y-2">
-            {/* Suggestion chips — only when no messages */}
-            {messages.length === 0 && (
-              <div className="flex flex-col items-end gap-1.5">
-                <p className="text-xs text-textdim">Try asking…</p>
-                {[
-                  "What fuel types are approved for Hirth engines?",
-                  "What are the endurance test requirements under FAR 33.49?",
-                  "Wie wird die Schallgeschwindigkeit im Auspuff berechnet?",
-                  "What optimization methods were used in the engine design?",
-                  "What are the key simulation boundary conditions?",
-                ].map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => send(q)}
-                    className="text-xs text-textdim bg-surface2 hover:bg-line border border-line hover:border-accent/50 hover:text-accent2 px-3 py-1.5 rounded-xl transition text-right"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="max-w-3xl mx-auto px-4 py-4">
             <div className="flex gap-2 items-center">
               <input
                 type="text"
@@ -255,12 +208,7 @@ export default function App() {
                 disabled={loading}
               />
               <label className="flex items-center gap-1.5 text-xs text-textdim cursor-pointer select-none shrink-0">
-                <input
-                  type="checkbox"
-                  checked={validate}
-                  onChange={(e) => setValidate(e.target.checked)}
-                  className="accent-accent"
-                />
+                <input type="checkbox" checked={validate} onChange={(e) => setValidate(e.target.checked)} className="accent-accent" />
                 Validate
               </label>
               <button
@@ -273,7 +221,60 @@ export default function App() {
             </div>
           </div>
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // ── All other tabs (hero + scrollable content) ────────────────────────────────
+  return (
+    <div className="h-screen bg-bg flex flex-col overflow-hidden">
+      <div ref={pageScrollRef} className="flex-1 overflow-y-auto">
+        <Hero sourceCount={sourceCount} />
+
+        <div className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur">
+          <div className="max-w-3xl mx-auto px-4 py-3">
+            <div className="flex justify-center">
+            <div className="flex bg-surface2 rounded-xl p-1 text-sm w-fit">
+              {TABS.map((v) => (
+                <button
+                  key={v}
+                  onClick={() => switchTab(v)}
+                  className={`px-4 py-1.5 rounded-lg transition font-medium ${
+                    view === v ? "bg-accent text-bg shadow" : "text-textdim hover:text-text"
+                  }`}
+                >
+                  {TAB_LABELS[v]}
+                </button>
+              ))}
+            </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto px-4">
+          {view === "docs" && (
+            <div className="py-6">
+              <DocumentSearch
+                onAskAbout={handleAskAbout}
+                query={docQuery} setQuery={setDocQuery}
+                results={docResults} setResults={setDocResults}
+                searched={docSearched} setSearched={setDocSearched}
+                searchTriggerRef={docSearchTriggerRef}
+              />
+            </div>
+          )}
+          {view === "admin" && (
+            <div className="py-6">
+              <AdminView onIngested={fetchSourceCount} />
+            </div>
+          )}
+          {view === "graph" && (
+            <div className="py-6 flex flex-col" style={{ height: "calc(100vh - 58px)" }}>
+              <GraphView onSelectDocument={handleGraphNodeClick} />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

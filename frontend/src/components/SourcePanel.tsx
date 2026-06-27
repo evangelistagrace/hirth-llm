@@ -34,8 +34,8 @@ export default function SourcePanel({ sources, groundingScore, query }: Props) {
         </div>
       )}
       <div className="text-xs font-mono text-textdim uppercase tracking-wide">Sources</div>
-      {sources.map((s, i) => (
-        <details key={i} className="bg-surface2 rounded-lg px-3 py-2 text-xs" open={i === 0}>
+      {sources.filter((s, i, arr) => arr.findIndex((x) => x.source === s.source) === i).slice(0, 3).map((s, i) => (
+        <details key={i} className="bg-surface2 rounded-lg px-3 py-2 text-xs">
           <summary className="cursor-pointer flex justify-between items-center">
             <span className="font-medium text-accent2">{s.source}</span>
             <span className="text-textdim ml-2 font-mono">relevance {(s.score * 100).toFixed(0)}%</span>
