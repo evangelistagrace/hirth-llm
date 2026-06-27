@@ -145,6 +145,32 @@ def _embed(texts: list[str], input_type: str = "search_document") -> list[list[f
     return response.embeddings.float
 
 
+# ── Auto-categorisation ────────────────────────────────────────────────────────
+
+CATEGORIES = ["mechanics", "electrics", "simulation", "software", "other"]
+
+def _classify_document(filename: str, sample_text: str) -> str:
+    """Ask GPT-4o-mini to classify the document into one of the fixed categories."""
+    from openai import OpenAI
+    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    prompt = (
+        f"Classify this engineering document into exactly one category.\n"
+        f"Categories: mechanics, electrics, simulation, software\n"
+        f"If none fit, reply: other\n\n"
+        f"Filename: {filename}\n"
+        f"Content sample:\n{sample_text[:800]}\n\n"
+        f"Reply with only the category name in lowercase."
+    )
+    resp = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=10,
+        temperature=0,
+    )
+    raw = resp.choices[0].message.content.strip().lower()
+    return raw if raw in CATEGORIES else "other"
+
+
 # ── Ingestion ──────────────────────────────────────────────────────────────────
 
 def ingest_file(path: Path) -> int:
@@ -174,6 +200,9 @@ def ingest_file(path: Path) -> int:
         return 0
 
     # 4. Store vectors + metadata in Chroma
+    # classify once per document using a sample of the first chunk
+    category = _classify_document(path.name, chunks[0]["text"])
+
     collection = get_collection()
     batch_size = 96
     total = 0
@@ -264,19 +293,17 @@ def _is_allowed(meta: dict, role: str = "admin", category: str | None = None) ->
     return role in allowed or "general_engineer" in allowed
 
 
-def query_collection(
-    query: str,
-    n_results: int = 5,
-    role: str = "admin",
-    category: str | None = None,
-) -> list[dict]:
+def query_collection(query: str, n_results: int = 5, role: str = "admin", categories: list[str]  | None = None) -> list[dict]:
     collection = get_collection()
     q_embedding = _embed([query], input_type="search_query")[0]
-
+    where = None
+    if categories:
+        where = {"category": {"$in": categories}} if len(categories) > 1 else {"category": categories[0]}
     results = collection.query(
         query_embeddings=[q_embedding],
         n_results=max(n_results * 5, 20),
         include=["documents", "metadatas", "distances"],
+        where=where,
     )
 
     chunks = []
@@ -373,3 +400,15 @@ def _is_allowed(meta: dict, role: str = "admin", category: str | None = None) ->
     allowed = [r.strip() for r in allowed_roles.split(",") if r.strip()]
 
     return role in allowed
+
+
+def get_categories() -> dict[str, int]:
+    """Return category → document count from metadata."""
+    collection = get_collection()
+    data = collection.get(include=["metadatas"])
+    seen: dict[str, set] = {}
+    for meta in data["metadatas"]:
+        cat = meta.get("category", "other")
+        src = meta.get("source", "")
+        seen.setdefault(cat, set()).add(src)
+    return {cat: len(srcs) for cat, srcs in sorted(seen.items())}

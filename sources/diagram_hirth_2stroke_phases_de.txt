@@ -1,0 +1,5 @@
+Two-stroke engine operating phases diagram in German. Shows three stages:
+(1) Einlaß offen, Überströmkanal, Kurbelgehäuse — intake open, transfer port active;
+(2) Gasauslaß offen, Gasaustritt, Pleuistange — exhaust open, gas exiting;
+(3) Gaseinlaß geöffnet, Kolben, Zündkerze — intake open, piston at BDC, spark plug visible.
+Zweitakt-Arbeitsprinzip, Spülvorgang, Ladungswechsel.

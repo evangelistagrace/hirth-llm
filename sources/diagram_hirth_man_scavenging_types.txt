@@ -1,0 +1,6 @@
+Comparison diagram of two-stroke scavenging systems with cross-sections through intake slots.
+Shows three variants: MAN-Umkehrspülung (MAN reverse scavenging),
+MAN-Umkehrspülung mit Nachladescheibe (with boost disc),
+and Schnürle-Umkehrspülung (Schnürle loop scavenging).
+A = Auslaß (exhaust), E = Einlaß (intake). Used for optimizing gas exchange in two-stroke engines.
+Keywords: Spülverfahren, Umkehrspülung, Schnürle, Ladungswechsel, Einlaßschlitze.

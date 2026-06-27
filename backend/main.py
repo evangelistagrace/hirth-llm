@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from ingestion import ingest_file, ingest_directory, get_collection
+from ingestion import ingest_file, ingest_directory, get_collection, get_categories
 from rag import chat, validate_answer, summarize_document
 from feedback import save_feedback, get_all_feedback, compute_source_multipliers
 
@@ -147,10 +147,13 @@ async def admin_data():
     collection = get_collection()
     meta_result = collection.get(include=["metadatas"])
     sources: dict[str, int] = {}
+    src_categories: dict[str, str] = {}
     for m in meta_result["metadatas"]:
         src = m.get("source", "unknown")
         sources[src] = sources.get(src, 0) + 1
-    kb_files = [{"name": k, "chunks": v} for k, v in sorted(sources.items())]
+        if src not in src_categories:
+            src_categories[src] = m.get("category", "other")
+    kb_files = [{"name": k, "chunks": v, "category": src_categories.get(k, "other")} for k, v in sorted(sources.items())]
 
     # feedback
     feedback = get_all_feedback()
@@ -170,8 +173,14 @@ async def list_sources():
     return {"sources": [{"name": k, "chunks": v} for k, v in sorted(sources.items())]}
 
 
+@app.get("/categories")
+async def list_categories():
+    """Return available categories and their document counts."""
+    return {"categories": get_categories()}
+
+
 @app.get("/search")
-async def search_documents(q: str, n: int = 10):
+async def search_documents(q: str, n: int = 10, categories: Optional[str] = None):
     """
     Hybrid search with three ranked lists fused via RRF:
       1. Title keyword match  (highest weight)
@@ -179,6 +188,7 @@ async def search_documents(q: str, n: int = 10):
       3. Semantic (vector) match
     """
     from ingestion import query_collection, get_collection
+    category_filter = [c.strip() for c in categories.split(",") if c.strip()] if categories else None
 
     # RRF weights per list — higher weight = list contributes more to final score
     RRF_K = 60
@@ -192,12 +202,24 @@ async def search_documents(q: str, n: int = 10):
     snippets: dict[str, str] = {}
     title_matches: set[str] = set()
 
+    # build source → category map for filter
+    src_category: dict[str, str] = {}
+    for meta in all_data["metadatas"]:
+        src = meta.get("source", "")
+        if src not in src_category:
+            src_category[src] = meta.get("category", "other")
+
+    def _allowed(src: str) -> bool:
+        if not category_filter:
+            return True
+        return src_category.get(src, "other") in category_filter
+
     # ── List 1: title keyword matches ─────────────────────────────────────────
     title_ranked: list[str] = []
     seen: set[str] = set()
     for meta in all_data["metadatas"]:
         src = meta.get("source", "")
-        if src in seen:
+        if src in seen or not _allowed(src):
             continue
         src_lower = src.lower()
         if q_lower in src_lower or any(t in src_lower for t in tokens):
@@ -209,6 +231,8 @@ async def search_documents(q: str, n: int = 10):
     body_by_source: dict[str, str] = {}
     for doc, meta in zip(all_data["documents"], all_data["metadatas"]):
         src = meta.get("source", "")
+        if not _allowed(src):
+            continue
         doc_lower = doc.lower()
         if q_lower in doc_lower or (len(tokens) >= 2 and sum(t in doc_lower for t in tokens) >= 2):
             if src not in body_by_source:
@@ -216,7 +240,7 @@ async def search_documents(q: str, n: int = 10):
     body_ranked = list(body_by_source.keys())
 
     # ── List 3: semantic matches ───────────────────────────────────────────────
-    semantic_chunks = query_collection(q, n_results=40)
+    semantic_chunks = query_collection(q, n_results=40, categories=category_filter)
     sem_by_source: dict[str, dict] = {}
     for chunk in semantic_chunks:
         if chunk["score"] < 0.40:
@@ -264,6 +288,7 @@ async def search_documents(q: str, n: int = 10):
                 "score": round(score / max_rrf, 4),
                 "snippet": snippets.get(src, ""),
                 "title_match": src in title_matches,
+                "category": src_category.get(src, "other"),
             }
             for src, score in rrf_scores.items()
         ],

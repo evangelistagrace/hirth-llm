@@ -113,8 +113,12 @@ export default function UploadZone({ onIngested, category }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-2 max-w-full">
-      <div className="flex gap-2 items-center flex-wrap justify-end">
+    <div className="flex flex-col gap-2">
+      <div className="flex gap-2 items-center">
+        <label className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg cursor-pointer transition">
+          Upload file
+          <input type="file" className="hidden" onChange={handleFile} disabled={loading} />
+        </label>
         <button
           onClick={ingestSources}
           disabled={loading}

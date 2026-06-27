@@ -1,136 +1,380 @@
 [
   {
-    "ts": 1782566050.5408149,
+    "ts": 1782561586.0382102,
     "file": "Berechnung Schallgeschwindigkeit im Auspuff.xlsx",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782566050.5428905,
+    "ts": 1782561586.038496,
     "file": "Diplomarbeit Auslegung und Optimierung.pdf",
     "chunks": 100,
     "source": "sources/"
   },
   {
-    "ts": 1782566050.5812666,
+    "ts": 1782561586.03876,
     "file": "FAR33.49.pdf",
     "chunks": 8,
     "source": "sources/"
   },
   {
-    "ts": 1782566050.621376,
+    "ts": 1782561586.039022,
     "file": "Formeln aus Youtube.png",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782566050.6577454,
+    "ts": 1782561586.039704,
     "file": "Fuel_Kraftstoffe_\u00dcbersicht_Daten.xlsx",
     "chunks": 5,
     "source": "sources/"
   },
   {
-    "ts": 1782566050.6898181,
-    "file": "M\u00f6gliche Werkzeugradien.docx",
+    "ts": 1782561586.040094,
+    "file": "Mo\u0308gliche Werkzeugradien.docx",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782566050.7215543,
+    "ts": 1782561586.040437,
     "file": "Simulation_Modelling.pdf",
     "chunks": 18,
     "source": "sources/"
   },
   {
-    "ts": 1782566237.8996081,
-    "file": "FAR33.49.pdf",
-    "chunks": 8,
-    "source": "upload",
-    "category": "mechanics",
-    "allowed_roles": "mechanics_engineer,general_engineer"
+    "ts": 1782561586.040826,
+    "file": "anmeldung.txt",
+    "chunks": 1,
+    "source": "sources/"
   },
   {
-    "ts": 1782567672.564483,
+    "ts": 1782561586.041194,
+    "file": "enrollment.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782561586.041666,
+    "file": "residence_permit.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782561586.046221,
+    "file": "student_services.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782561586.046617,
+    "file": "visa.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566804.1649458,
     "file": "Berechnung Schallgeschwindigkeit im Auspuff.xlsx",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782567672.5778415,
+    "ts": 1782566804.16556,
     "file": "Diplomarbeit Auslegung und Optimierung.pdf",
     "chunks": 100,
     "source": "sources/"
   },
   {
-    "ts": 1782567672.5867145,
+    "ts": 1782566804.165819,
     "file": "FAR33.49.pdf",
     "chunks": 8,
     "source": "sources/"
   },
   {
-    "ts": 1782567672.5946681,
+    "ts": 1782566804.166058,
     "file": "Formeln aus Youtube.png",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782567672.6030242,
+    "ts": 1782566804.166293,
     "file": "Fuel_Kraftstoffe_\u00dcbersicht_Daten.xlsx",
     "chunks": 5,
     "source": "sources/"
   },
   {
-    "ts": 1782567672.6164935,
-    "file": "M\u00f6gliche Werkzeugradien.docx",
+    "ts": 1782566804.166517,
+    "file": "Mo\u0308gliche Werkzeugradien.docx",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782567672.6274788,
+    "ts": 1782566804.1667478,
     "file": "Simulation_Modelling.pdf",
     "chunks": 18,
     "source": "sources/"
   },
   {
-    "ts": 1782569484.826001,
+    "ts": 1782566804.166976,
+    "file": "anmeldung.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566804.1672058,
+    "file": "enrollment.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566804.16744,
+    "file": "residence_permit.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566804.1676958,
+    "file": "student_services.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566804.167934,
+    "file": "visa.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.9544299,
     "file": "Berechnung Schallgeschwindigkeit im Auspuff.xlsx",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782569484.8271832,
+    "ts": 1782566949.954992,
     "file": "Diplomarbeit Auslegung und Optimierung.pdf",
     "chunks": 100,
     "source": "sources/"
   },
   {
-    "ts": 1782569484.8360841,
+    "ts": 1782566949.955285,
     "file": "FAR33.49.pdf",
     "chunks": 8,
     "source": "sources/"
   },
   {
-    "ts": 1782569484.84758,
+    "ts": 1782566949.95558,
     "file": "Formeln aus Youtube.png",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782569484.8548617,
+    "ts": 1782566949.9558458,
     "file": "Fuel_Kraftstoffe_\u00dcbersicht_Daten.xlsx",
     "chunks": 5,
     "source": "sources/"
   },
   {
-    "ts": 1782569484.862062,
-    "file": "M\u00f6gliche Werkzeugradien.docx",
+    "ts": 1782566949.956112,
+    "file": "Mo\u0308gliche Werkzeugradien.docx",
     "chunks": 1,
     "source": "sources/"
   },
   {
-    "ts": 1782569484.8714359,
+    "ts": 1782566949.9563851,
     "file": "Simulation_Modelling.pdf",
     "chunks": 18,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.956658,
+    "file": "anmeldung.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.9569259,
+    "file": "diagram_hirth_2stroke_components.png",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.957217,
+    "file": "diagram_hirth_2stroke_phases_de.png",
+    "chunks": 0,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.960876,
+    "file": "diagram_hirth_4cylinder_cycle.png",
+    "chunks": 0,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.9613361,
+    "file": "diagram_hirth_man_scavenging_types.jpeg",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.961827,
+    "file": "diagram_hirth_scavenging_flow.jpeg",
+    "chunks": 0,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.962264,
+    "file": "enrollment.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.9626849,
+    "file": "residence_permit.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.963103,
+    "file": "student_services.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782566949.96358,
+    "file": "visa.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.0190668,
+    "file": "Berechnung Schallgeschwindigkeit im Auspuff.xlsx",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.020083,
+    "file": "Diplomarbeit Auslegung und Optimierung.pdf",
+    "chunks": 100,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.020502,
+    "file": "FAR33.49.pdf",
+    "chunks": 8,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.020909,
+    "file": "Formeln aus Youtube.png",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.021329,
+    "file": "Fuel_Kraftstoffe_\u00dcbersicht_Daten.xlsx",
+    "chunks": 5,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.021774,
+    "file": "Mo\u0308gliche Werkzeugradien.docx",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.0221498,
+    "file": "Simulation_Modelling.pdf",
+    "chunks": 18,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.0226,
+    "file": "anmeldung.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.0230641,
+    "file": "diagram_hirth_2stroke_components.png",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.023686,
+    "file": "diagram_hirth_2stroke_components.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.024126,
+    "file": "diagram_hirth_2stroke_phases_de.png",
+    "chunks": 0,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.024597,
+    "file": "diagram_hirth_2stroke_phases_de.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.025043,
+    "file": "diagram_hirth_4cylinder_cycle.png",
+    "chunks": 0,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.025543,
+    "file": "diagram_hirth_4cylinder_cycle.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.026006,
+    "file": "diagram_hirth_man_scavenging_types.jpeg",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.0269608,
+    "file": "diagram_hirth_man_scavenging_types.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.027485,
+    "file": "diagram_hirth_scavenging_flow.jpeg",
+    "chunks": 0,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.0292401,
+    "file": "diagram_hirth_scavenging_flow.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.0297139,
+    "file": "enrollment.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.0301561,
+    "file": "residence_permit.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.030595,
+    "file": "student_services.txt",
+    "chunks": 1,
+    "source": "sources/"
+  },
+  {
+    "ts": 1782567135.031035,
+    "file": "visa.txt",
+    "chunks": 1,
     "source": "sources/"
   }
 ]

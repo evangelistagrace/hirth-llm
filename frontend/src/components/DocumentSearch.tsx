@@ -30,21 +30,20 @@ type Props = {
 
 const roles = [
   "admin",
-  "general_engineer",
-  "mechanics_engineer",
-  "electrics_engineer",
-  "simulation_engineer",
-  "software_engineer",
+  "manager",
+  "employee",
+  "intern"
 ];
 
-const categories = [
-  "all",
-  "general",
-  "mechanics",
-  "electrics",
-  "simulation",
-  "software",
-];
+const CATEGORIES = ["mechanics", "electrics", "simulation", "software", "other"] as const;
+
+const CATEGORY_COLORS: Record<string, string> = {
+  mechanics:   "bg-orange-900/50 text-orange-300 border-orange-800/50",
+  electrics:   "bg-yellow-900/50 text-yellow-300 border-yellow-800/50",
+  simulation:  "bg-blue-900/50 text-blue-300 border-blue-800/50",
+  software:    "bg-green-900/50 text-green-300 border-green-800/50",
+  other:       "bg-gray-700/60 text-gray-400 border-gray-600/50",
+};
 
 function fileType(name: string) {
   return name.split(".").pop()?.toUpperCase() ?? "FILE";
@@ -70,6 +69,16 @@ function ScoreBadge({ score }: { score: number }) {
   );
 }
 
+
+function CategoryBadge({ category }: { category: string }) {
+  const cls = CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other;
+  return (
+    <span className={`text-[11px] border px-2 py-0.5 rounded-md font-medium capitalize ${cls}`}>
+      {category}
+    </span>
+  );
+}
+
 export default function DocumentSearch({
   onAskAbout,
   query,
@@ -83,6 +92,7 @@ export default function DocumentSearch({
   searchTriggerRef,
 }: Props) {
   const [searching, setSearching] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [loadingSummary, setLoadingSummary] = useState<string | null>(null);
 
@@ -94,9 +104,18 @@ export default function DocumentSearch({
     }
   });
 
-  async function search() {
-    if (!query.trim()) return;
 
+  function toggleCategory(cat: string) {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  }
+
+  async function search(cats?: Set<string>) {
+    if (!query.trim()) return;
+    const activeCats = cats ?? selectedCategories;
     setSearching(true);
     setSearched(false);
 
@@ -108,20 +127,42 @@ export default function DocumentSearch({
         category,
       });
 
-      const res = await fetch(`/api/search?${params.toString()}`);
-
-      if (!res.ok) {
-        throw new Error("Search failed");
-      }
-
+      
+      let url = `/api/search?q=${encodeURIComponent(query)}&n=10`;
+      if (activeCats.size > 0) url += `&categories=${[...activeCats].join(",")}`;
+      const res = await fetch(url);
       const data = await res.json();
+      // Convert diagram .txt results to .png display; deduplicate if both appear
+      const seen = new Set<string>();
+      const merged: DocResult[] = [];
+      for (const r of data.results as DocResult[]) {
+        const isDiagramTxt = r.source.startsWith("diagram_") && r.source.endsWith(".txt");
+        const isDiagramPng = r.source.startsWith("diagram_") && r.source.endsWith(".png");
+        const stem = isDiagramTxt
+          ? r.source.replace(/\.txt$/, "")
+          : isDiagramPng
+          ? r.source.replace(/\.png$/, "")
+          : null;
 
-      setResults(data.results ?? []);
+        if (stem) {
+          if (seen.has(stem)) continue; // deduplicate
+          seen.add(stem);
+          // always present as .png
+          merged.push({ ...r, source: `${stem}.png` });
+        } else {
+          merged.push(r);
+        }
+      }
+      setResults(merged);
       setSearched(true);
     } finally {
       setSearching(false);
     }
   }
+
+  useEffect(() => {
+    if (searchTriggerRef) searchTriggerRef.current = () => search();
+  });
 
   async function loadSummary(name: string) {
     if (summaries[name]) return;
@@ -154,45 +195,58 @@ export default function DocumentSearch({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="bg-gray-800/50 border border-gray-700/50 rounded-2xl p-4 space-y-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-100">
-              Document Retrieval
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Results are filtered by role, category, and S3-backed metadata.
-            </p>
-          </div>
-
-          <div className="flex gap-2 flex-wrap">
-            
-
-            
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            className="flex-1 bg-gray-900 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
-            placeholder='e.g. "fuel mixture adjustment" or FAR33'
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && search()}
-          />
-
-          <button
-            onClick={search}
-            disabled={searching || !query.trim()}
-            className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 py-3 rounded-xl text-sm font-medium transition shrink-0"
-          >
-            {searching ? "Searching…" : "Search"}
-          </button>
-        </div>
+    <div className="flex flex-col gap-5">
+      {/* Search bar */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          className="flex-1 bg-gray-800 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
+          placeholder='e.g. "fuel mixture adjustment" or FAR33'
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && search()}
+        />
+        <button
+          onClick={() => search()}
+          disabled={searching || !query.trim()}
+          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 py-3 rounded-xl text-sm font-medium transition shrink-0"
+        >
+          {searching ? "Searching…" : "Search"}
+        </button>
       </div>
 
+      {/* Category filter chips */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-xs text-gray-500 shrink-0">Filter:</span>
+        <button
+          onClick={() => setSelectedCategories(new Set())}
+          className={`text-xs px-3 py-1 rounded-full border transition font-medium ${
+            selectedCategories.size === 0
+              ? "bg-indigo-600 border-indigo-500 text-white"
+              : "border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300"
+          }`}
+        >
+          All
+        </button>
+        {CATEGORIES.map((cat) => {
+          const active = selectedCategories.has(cat);
+          return (
+            <button
+              key={cat}
+              onClick={() => toggleCategory(cat)}
+              className={`text-xs px-3 py-1 rounded-full border transition font-medium capitalize ${
+                active
+                  ? `${CATEGORY_COLORS[cat]} border-current`
+                  : "border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300"
+              }`}
+            >
+              {cat}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Results */}
       {searched && (
         <div>
           <div className="flex items-center justify-between mb-4">
@@ -224,20 +278,13 @@ export default function DocumentSearch({
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-gray-100 break-words">
-                        {doc.source}
-                      </h3>
-
+                      <h3 className="text-sm font-semibold text-gray-100 break-words">{doc.source}</h3>
                       <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <span className="text-[11px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded-md font-medium">
                           {fileType(doc.source)}
                         </span>
 
-                        {doc.category && (
-                          <span className="text-[11px] bg-blue-900/60 text-blue-300 px-2 py-0.5 rounded-md font-medium">
-                            {doc.category}
-                          </span>
-                        )}
+                        {doc.category && <CategoryBadge category={doc.category} />}
 
                         {doc.storage && (
                           <span className="text-[11px] bg-purple-900/60 text-purple-300 px-2 py-0.5 rounded-md font-medium">
@@ -245,6 +292,7 @@ export default function DocumentSearch({
                           </span>
                         )}
 
+                        
                         {doc.title_match && (
                           <span className="text-[11px] bg-indigo-900/60 text-indigo-300 px-2 py-0.5 rounded-md font-medium">
                             title match
@@ -279,6 +327,17 @@ export default function DocumentSearch({
                     />
                   </blockquote>
 
+                  {/* Image preview — directly for .png, or paired for diagram .txt */}
+                  {doc.source.startsWith("diagram_") && doc.source.endsWith(".png") && (
+                    <img
+                      src={`/api/sources/${encodeURIComponent(doc.source)}/download`}
+                      className="mt-4 rounded-xl max-h-72 object-contain bg-gray-900/50 w-full"
+                      alt={doc.source.replace(/\.png$/, "")}
+                      onError={(e) => (e.currentTarget.style.display = "none")}
+                    />
+                  )}
+
+                  {/* Summary */}
                   {summaries[doc.source] && (
                     <div className="mt-3 text-xs text-gray-300 bg-gray-900/50 rounded-xl px-4 py-3 leading-relaxed whitespace-pre-wrap">
                       <Highlighted text={summaries[doc.source]} tokens={tokens} />

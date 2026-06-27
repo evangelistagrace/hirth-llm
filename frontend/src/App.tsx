@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import SourcePanel from "./components/SourcePanel";
-import UploadZone from "./components/UploadZone";
 import DocumentSearch from "./components/DocumentSearch";
 import FeedbackBar from "./components/FeedbackBar";
 import GraphView from "./components/GraphView";
@@ -62,6 +61,8 @@ export default function App() {
   const [role, setRole] = useState("admin");
   const [category, setCategory] = useState("all");
 
+  // Lifted doc search state so it survives tab switches
+  type DocResult = { source: string; score: number; snippet: string; title_match?: boolean; category?: string };
   const [docQuery, setDocQuery] = useState("");
   const [docResults, setDocResults] = useState<DocResult[]>([]);
   const [docSearched, setDocSearched] = useState(false);
@@ -197,7 +198,7 @@ export default function App() {
             )}
           </div>
 
-         <UploadZone onIngested={fetchSourceCount} category={category} />
+        <UploadZone onIngested={fetchSourceCount} category={category} />
         </div>
 
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -383,7 +384,7 @@ export default function App() {
 
       {view === "admin" && (
         <div className="flex-1 overflow-y-auto py-6">
-          <AdminView />
+          <AdminView onIngested={fetchSourceCount} />
         </div>
       )}
 
