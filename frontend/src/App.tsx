@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import Hero from "./components/Hero";
 import ReactMarkdown from "react-markdown";
 import SourcePanel from "./components/SourcePanel";
 import UploadZone from "./components/UploadZone";
@@ -103,49 +104,71 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-3xl mx-auto px-4">
+    <div className="flex flex-col h-screen bg-bg">
 
-      {/* ── Header ── */}
-      <header className="pt-5 pb-4 border-b border-gray-800 space-y-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">Hirth Document Intelligence</h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              AI-powered document retrieval for Hirth knowledge base
-            </p>
-          </div>
-          <UploadZone onIngested={fetchSourceCount} />
-        </div>
+      {/* ── Hero ── */}
+      <Hero sourceCount={sourceCount} />
 
-        {/* Tab bar */}
-        <div className="flex bg-gray-800/70 rounded-xl p-1 text-sm w-fit">
-          {(["docs", "chat", "graph", "admin"] as const).map((v) => (
+      {/* ── Control bar ── */}
+      <div className="border-b border-line bg-surface">
+        <div className="max-w-3xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex bg-surface2 rounded-xl p-1 text-sm w-fit">
             <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-4 py-1.5 rounded-lg transition font-medium capitalize ${
-                view === v ? "bg-indigo-600 text-white shadow" : "text-gray-400 hover:text-gray-200"
+              onClick={() => setView("chat")}
+              className={`px-4 py-1.5 rounded-lg transition font-medium ${
+                view === "chat" ? "bg-accent text-bg shadow" : "text-textdim hover:text-text"
               }`}
             >
-              {v === "docs" ? "Documents" : v === "graph" ? "Graph" : v === "admin" ? "Admin" : "Chat"}
+              Chat
             </button>
-          ))}
+            <button
+              onClick={() => setView("docs")}
+              className={`px-4 py-1.5 rounded-lg transition font-medium ${
+                view === "docs" ? "bg-accent text-bg shadow" : "text-textdim hover:text-text"
+              }`}
+            >
+              Documents
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {view === "chat" && (
+              <label className="flex items-center gap-1.5 text-xs text-textdim cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={validate}
+                  onChange={(e) => setValidate(e.target.checked)}
+                  className="accent-accent"
+                />
+                Validate
+              </label>
+            )}
+            <UploadZone onIngested={fetchSourceCount} />
+          </div>
         </div>
-      </header>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-3xl mx-auto px-4">
 
       {/* ── Chat view ── */}
       {view === "chat" && (
         <>
-          <div className="flex-1 overflow-y-auto py-6 space-y-6">
+          <div className="py-6 space-y-6">
+            {messages.length === 0 && (
+              <div className="text-center text-textdim mt-24 text-sm">
+                Ask a question about Hirth engines — in English or German.
+              </div>
+            )}
             {messages.map((msg, i) => (
               <div key={i} className={msg.role === "user" ? "flex justify-end" : ""}>
                 {msg.role === "user" ? (
-                  <div className="bg-indigo-700 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%] text-sm leading-relaxed">
+                  <div className="bg-accent text-bg rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%] text-sm leading-relaxed font-medium">
                     {msg.content}
                   </div>
                 ) : (
                   <div className="max-w-[90%]">
-                    <div className="bg-gray-800 rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-1.5 prose-li:my-0.5 prose-headings:text-gray-100 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-gray-200 prose-code:text-indigo-300 prose-code:bg-gray-900 prose-code:px-1 prose-code:rounded prose-ol:pl-4 prose-ul:pl-4">
+                    <div className="bg-surface2 rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-1.5 prose-li:my-0.5 prose-headings:text-gray-100 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-gray-200 prose-code:text-indigo-300 prose-code:bg-gray-900 prose-code:px-1 prose-code:rounded prose-ol:pl-4 prose-ul:pl-4">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                     {msg.sources && (
@@ -168,9 +191,9 @@ export default function App() {
             ))}
             {loading && (
               <div className="flex gap-1.5 px-4 py-2">
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:300ms]" />
+                <span className="w-2 h-2 bg-textdim rounded-full animate-bounce [animation-delay:0ms]" />
+                <span className="w-2 h-2 bg-textdim rounded-full animate-bounce [animation-delay:150ms]" />
+                <span className="w-2 h-2 bg-textdim rounded-full animate-bounce [animation-delay:300ms]" />
               </div>
             )}
             <div ref={bottomRef} />
@@ -231,7 +254,7 @@ export default function App() {
 
       {/* ── Documents view ── */}
       {view === "docs" && (
-        <div className="flex-1 overflow-y-auto py-6">
+        <div className="py-6">
           <DocumentSearch
             onAskAbout={handleAskAbout}
             query={docQuery}
@@ -256,6 +279,34 @@ export default function App() {
       {view === "graph" && (
         <div className="flex-1 py-6 flex flex-col overflow-hidden">
           <GraphView onSelectDocument={handleGraphNodeClick} />
+        </div>
+      )}
+        </div>
+      </div>
+
+      {/* ── Composer (chat view only) ── */}
+      {view === "chat" && (
+        <div className="border-t border-line bg-surface">
+          <div className="max-w-3xl mx-auto px-4 py-4">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                className="flex-1 bg-surface2 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent placeholder-textdim/70"
+                placeholder="Ask about Hirth engines… / Frage auf Deutsch…"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && send()}
+                disabled={loading}
+              />
+              <button
+                onClick={() => send()}
+                disabled={loading || !input.trim()}
+                className="bg-accent hover:bg-accent2 disabled:opacity-40 text-bg px-4 py-2.5 rounded-xl text-sm font-semibold transition"
+              >
+                Send
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

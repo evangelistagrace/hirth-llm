@@ -3,5 +3,17 @@
 @tailwind utilities;
 
 body {
-  @apply bg-gray-950 text-gray-100 font-sans;
+  @apply bg-bg text-text font-sans;
 }
+
+::selection {
+  background-color: theme("colors.accent");
+  color: theme("colors.bg");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe-only {
+    animation: none !important;
+  }
+}
+
