@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import Hero from "./components/Hero";
 import SourcePanel from "./components/SourcePanel";
 import DocumentSearch from "./components/DocumentSearch";
 import FeedbackBar from "./components/FeedbackBar";
@@ -20,6 +21,7 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [view, setView] = useState<"chat" | "docs" | "graph" | "admin">("docs");
+  const [showHero, setShowHero] = useState(true);
   const [loading, setLoading] = useState(false);
   const [validate, setValidate] = useState(false);
   const [sourceCount, setSourceCount] = useState<number | null>(null);
@@ -102,48 +104,54 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen max-w-3xl mx-auto px-4">
+    <div className="min-h-screen bg-bg flex flex-col">
 
-      {/* ── Header ── */}
-      <header className="pt-5 pb-4 border-b border-gray-800 space-y-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">Hirth Document Intelligence</h1>
-            <p className="text-xs text-gray-500 mt-0.5">
-              AI-powered document retrieval for Hirth knowledge base
-            </p>
+      {/* ── Hero ── */}
+      <div
+        className={`overflow-hidden transition-all duration-700 ${
+          showHero ? "max-h-[75vh] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <Hero sourceCount={sourceCount} />
+      </div>
+
+      <div className="border-b border-line bg-surface shrink-0">
+        <div className="max-w-3xl mx-auto px-4 py-3">
+          <div className="flex bg-surface2 rounded-xl p-1 text-sm w-fit">
+            {(["docs", "chat", "graph", "admin"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => {
+                  setShowHero(false);
+                  setView(v);
+                  }}
+                className={`px-4 py-1.5 rounded-lg transition font-medium capitalize ${
+                  view === v ? "bg-accent text-bg shadow" : "text-textdim hover:text-text"
+                }`}
+              >
+                {v === "docs" ? "Documents" : v === "graph" ? "Graph" : v === "admin" ? "Admin" : "Chat"}
+              </button>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Tab bar */}
-        <div className="flex bg-gray-800/70 rounded-xl p-1 text-sm w-fit">
-          {(["docs", "chat", "graph", "admin"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-4 py-1.5 rounded-lg transition font-medium capitalize ${
-                view === v ? "bg-indigo-600 text-white shadow" : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              {v === "docs" ? "Documents" : v === "graph" ? "Graph" : v === "admin" ? "Admin" : "Chat"}
-            </button>
-          ))}
-        </div>
-      </header>
+      <div className="flex-1">
+        <div className="max-w-3xl mx-auto px-4">
 
       {/* ── Chat view ── */}
       {view === "chat" && (
         <>
-          <div className="flex-1 overflow-y-auto py-6 space-y-6">
+          <div className="py-6 space-y-6">
             {messages.map((msg, i) => (
               <div key={i} className={msg.role === "user" ? "flex justify-end" : ""}>
                 {msg.role === "user" ? (
-                  <div className="bg-indigo-700 text-white rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%] text-sm leading-relaxed">
+                  <div className="bg-accent text-bg rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%] text-sm leading-relaxed font-medium">
                     {msg.content}
                   </div>
                 ) : (
                   <div className="max-w-[90%]">
-                    <div className="bg-gray-800 rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-1.5 prose-li:my-0.5 prose-headings:text-gray-100 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-gray-200 prose-code:text-indigo-300 prose-code:bg-gray-900 prose-code:px-1 prose-code:rounded prose-ol:pl-4 prose-ul:pl-4">
+                    <div className="bg-surface2 rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-1.5 prose-li:my-0.5 prose-headings:text-text prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-text prose-code:text-accent2 prose-code:bg-bg prose-code:px-1 prose-code:rounded prose-ol:pl-4 prose-ul:pl-4 prose-a:text-data">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                     {msg.sources && (
@@ -155,6 +163,7 @@ export default function App() {
                     )}
                     {msg.question && (
                       <FeedbackBar
+                        mode="answer"
                         question={msg.question}
                         answer={msg.content}
                         sources={msg.sources ?? []}
@@ -166,70 +175,19 @@ export default function App() {
             ))}
             {loading && (
               <div className="flex gap-1.5 px-4 py-2">
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:0ms]" />
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:150ms]" />
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:300ms]" />
+                <span className="w-2 h-2 bg-textdim rounded-full animate-bounce [animation-delay:0ms]" />
+                <span className="w-2 h-2 bg-textdim rounded-full animate-bounce [animation-delay:150ms]" />
+                <span className="w-2 h-2 bg-textdim rounded-full animate-bounce [animation-delay:300ms]" />
               </div>
             )}
             <div ref={bottomRef} />
-          </div>
-
-          <div className="py-4 border-t border-gray-800 space-y-2">
-            {/* Suggestion chips — bottom right, only when no messages */}
-            {messages.length === 0 && (
-              <div className="flex flex-col items-end gap-1.5">
-                <p className="text-xs text-gray-600">Try asking…</p>
-                {[
-                  "What fuel types are approved for Hirth engines?",
-                  "What are the endurance test requirements under FAR 33.49?",
-                  "Wie wird die Schallgeschwindigkeit im Auspuff berechnet?",
-                  "What optimization methods were used in the engine design?",
-                  "What are the key simulation boundary conditions?",
-                ].map((q) => (
-                  <button
-                    key={q}
-                    onClick={() => send(q)}
-                    className="text-xs text-gray-400 bg-gray-800/70 hover:bg-gray-700/70 border border-gray-700/50 hover:border-indigo-500/50 hover:text-indigo-300 px-3 py-1.5 rounded-xl transition text-right"
-                  >
-                    {q}
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                className="flex-1 bg-gray-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
-                placeholder="Ask about Hirth engines… / Frage auf Deutsch…"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && send()}
-                disabled={loading}
-              />
-              <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer select-none shrink-0">
-                <input
-                  type="checkbox"
-                  checked={validate}
-                  onChange={(e) => setValidate(e.target.checked)}
-                  className="accent-indigo-500"
-                />
-                Validate
-              </label>
-              <button
-                onClick={() => send()}
-                disabled={loading || !input.trim()}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition shrink-0"
-              >
-                Send
-              </button>
-            </div>
           </div>
         </>
       )}
 
       {/* ── Documents view ── */}
       {view === "docs" && (
-        <div className="flex-1 overflow-y-auto py-6">
+        <div className="py-6">
           <DocumentSearch
             onAskAbout={handleAskAbout}
             query={docQuery}
@@ -245,15 +203,73 @@ export default function App() {
 
       {/* ── Admin view ── */}
       {view === "admin" && (
-        <div className="flex-1 overflow-y-auto py-6">
+        <div className="py-6">
           <AdminView onIngested={fetchSourceCount} />
         </div>
       )}
 
       {/* ── Graph view ── */}
       {view === "graph" && (
-        <div className="flex-1 py-6 flex flex-col overflow-hidden">
+        <div className="py-6 flex flex-col" style={{ minHeight: "calc(100vh - 58vh - 70px)" }}>
           <GraphView onSelectDocument={handleGraphNodeClick} />
+        </div>
+      )}
+        </div>
+      </div>
+
+      {/* ── Composer (chat view only) ── */}
+      {view === "chat" && (
+        <div className="border-t border-line bg-surface shrink-0">
+          <div className="max-w-3xl mx-auto px-4 py-4 space-y-2">
+            {/* Suggestion chips — only when no messages */}
+            {messages.length === 0 && (
+              <div className="flex flex-col items-end gap-1.5">
+                <p className="text-xs text-textdim">Try asking…</p>
+                {[
+                  "What fuel types are approved for Hirth engines?",
+                  "What are the endurance test requirements under FAR 33.49?",
+                  "Wie wird die Schallgeschwindigkeit im Auspuff berechnet?",
+                  "What optimization methods were used in the engine design?",
+                  "What are the key simulation boundary conditions?",
+                ].map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => send(q)}
+                    className="text-xs text-textdim bg-surface2 hover:bg-line border border-line hover:border-accent/50 hover:text-accent2 px-3 py-1.5 rounded-xl transition text-right"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="flex gap-2 items-center">
+              <input
+                type="text"
+                className="flex-1 bg-surface2 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-accent placeholder-textdim/70"
+                placeholder="Ask about Hirth engines… / Frage auf Deutsch…"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && send()}
+                disabled={loading}
+              />
+              <label className="flex items-center gap-1.5 text-xs text-textdim cursor-pointer select-none shrink-0">
+                <input
+                  type="checkbox"
+                  checked={validate}
+                  onChange={(e) => setValidate(e.target.checked)}
+                  className="accent-accent"
+                />
+                Validate
+              </label>
+              <button
+                onClick={() => send()}
+                disabled={loading || !input.trim()}
+                className="bg-accent hover:bg-accent2 disabled:opacity-40 text-bg px-4 py-2.5 rounded-xl text-sm font-semibold transition shrink-0"
+              >
+                Send
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

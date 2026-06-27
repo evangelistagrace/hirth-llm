@@ -57,7 +57,7 @@ export default function FeedbackBar(props: Props) {
 
   if (submitted) {
     return (
-      <p className="text-xs text-gray-600 mt-1">
+      <p className="text-xs text-textdim mt-1">
         {rating === 1 ? "👍 Thanks" : "👎 Noted"}
       </p>
     );
@@ -68,42 +68,42 @@ export default function FeedbackBar(props: Props) {
       {!showReasons ? (
         <div className="flex items-center gap-2">
           {props.mode === "answer" && (
-            <span className="text-xs text-gray-600">Was this helpful?</span>
+            <span className="text-xs text-textdim">Was this helpful?</span>
           )}
           <button
             onClick={() => submit(1)}
-            className="text-gray-500 hover:text-green-400 transition text-sm"
+            className="text-textdim hover:text-good transition text-sm"
             title="Relevant"
           >
             👍
           </button>
           <button
             onClick={() => setShowReasons(true)}
-            className="text-gray-500 hover:text-red-400 transition text-sm"
+            className="text-textdim hover:text-warn transition text-sm"
             title="Not relevant"
           >
             👎
           </button>
           {props.mode === "document" && (
-            <span className="text-xs text-gray-600">Relevant result?</span>
+            <span className="text-xs text-textdim">Relevant result?</span>
           )}
         </div>
       ) : (
         <div className="space-y-1.5">
-          <p className="text-xs text-gray-500">What was wrong?</p>
+          <p className="text-xs text-textdim">What was wrong?</p>
           <div className="flex flex-wrap gap-2">
             {reasons.map((reason) => (
               <button
                 key={reason}
                 onClick={() => submit(-1, reason)}
-                className="text-xs border border-gray-700 hover:border-red-500 hover:text-red-300 text-gray-400 px-2.5 py-1 rounded-lg transition"
+                className="text-xs border border-line hover:border-warn hover:text-warn text-textdim px-2.5 py-1 rounded-lg transition"
               >
                 {reason}
               </button>
             ))}
             <button
               onClick={() => submit(-1)}
-              className="text-xs text-gray-600 hover:text-gray-400 px-2 py-1 transition"
+              className="text-xs text-textdim hover:text-text px-2 py-1 transition"
             >
               Skip
             </button>
