@@ -268,6 +268,62 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
         </Section>
       )}
 
+      {/* ── Feedback ── */}
+      <Section title="User Feedback" count={data.feedback.length}>
+        {data.feedback.length === 0 ? (
+          <p className="text-xs text-textdim">No feedback submitted yet.</p>
+        ) : (
+          <>
+            {/* Summary bar */}
+            <div className="flex gap-4 text-xs mb-2">
+              <span className="text-good font-medium">👍 {thumbsUp} positive</span>
+              <span className="text-warn font-medium">👎 {data.feedback.filter((f) => f.rating === -1).length} negative</span>
+              <span className="text-textdim ml-auto font-mono">
+                {data.feedback.length > 0
+                  ? `${Math.round((thumbsUp / data.feedback.length) * 100)}% satisfaction`
+                  : ""}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              {[...data.feedback].reverse().map((f) => {
+                const topSource = f.sources?.[0];
+                return (
+                <div key={f.id} className={`rounded-xl border px-4 py-3 text-xs space-y-2.5 ${f.rating === 1 ? "border-good/40 bg-good/5" : "border-warn/40 bg-warn/5"}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="font-semibold text-text leading-snug">{f.question || "—"}</span>
+                    <div className="flex items-center gap-2 shrink-0 pt-0.5">
+                      {f.reason && (
+                        <span className="bg-surface2 text-textdim px-2 py-0.5 rounded-full">{f.reason}</span>
+                      )}
+                      <span>{f.rating === 1 ? "👍" : "👎"}</span>
+                      <span className="text-textdim whitespace-nowrap font-mono">{ts(f.ts)}</span>
+                    </div>
+                  </div>
+                  {f.answer && (
+                    <p className="text-textdim leading-relaxed line-clamp-3 border-l-2 border-line pl-3">
+                      {f.answer}
+                    </p>
+                  )}
+                  {topSource && (
+                    <div className="flex items-center gap-1.5">
+                      <svg className="w-3 h-3 text-textdim shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="bg-surface2 text-textdim px-2 py-0.5 rounded truncate max-w-xs">{topSource}</span>
+                      {f.sources.length > 1 && (
+                        <span className="text-textdim">+{f.sources.length - 1} more</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </Section>
+
       {/* ── Knowledge Base ── */}
       <Section title="Knowledge Base" count={data.kb_files.length}>
         {data.kb_files.length === 0 ? (
@@ -320,66 +376,6 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
 
   
 
-      {/* ── Feedback ── */}
-      <Section title="User Feedback" count={data.feedback.length}>
-        {data.feedback.length === 0 ? (
-          <p className="text-xs text-textdim">No feedback submitted yet.</p>
-        ) : (
-          <>
-            {/* Summary bar */}
-            <div className="flex gap-4 text-xs mb-2">
-              <span className="text-good font-medium">👍 {thumbsUp} positive</span>
-              <span className="text-warn font-medium">👎 {data.feedback.filter((f) => f.rating === -1).length} negative</span>
-              <span className="text-textdim ml-auto font-mono">
-                {data.feedback.length > 0
-                  ? `${Math.round((thumbsUp / data.feedback.length) * 100)}% satisfaction`
-                  : ""}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {[...data.feedback].reverse().map((f) => {
-                const topSource = f.sources?.[0];
-                return (
-                <div key={f.id} className={`rounded-xl border px-4 py-3 text-xs space-y-2.5 ${f.rating === 1 ? "border-good/40 bg-good/5" : "border-warn/40 bg-warn/5"}`}>
-                  {/* Header: question + meta */}
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="font-semibold text-text leading-snug">{f.question || "—"}</span>
-                    <div className="flex items-center gap-2 shrink-0 pt-0.5">
-                      {f.reason && (
-                        <span className="bg-surface2 text-textdim px-2 py-0.5 rounded-full">{f.reason}</span>
-                      )}
-                      <span>{f.rating === 1 ? "👍" : "👎"}</span>
-                      <span className="text-textdim whitespace-nowrap font-mono">{ts(f.ts)}</span>
-                    </div>
-                  </div>
-
-                  {/* Answer excerpt */}
-                  {f.answer && (
-                    <p className="text-textdim leading-relaxed line-clamp-3 border-l-2 border-line pl-3">
-                      {f.answer}
-                    </p>
-                  )}
-
-                  {/* Top source */}
-                  {topSource && (
-                    <div className="flex items-center gap-1.5">
-                      <svg className="w-3 h-3 text-textdim shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <span className="bg-surface2 text-textdim px-2 py-0.5 rounded truncate max-w-xs">{topSource}</span>
-                      {f.sources.length > 1 && (
-                        <span className="text-textdim">+{f.sources.length - 1} more</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-      </Section>
 
     </div>
   );
