@@ -103,14 +103,23 @@ function ts(unix: number) {
   return new Date(unix * 1000).toLocaleString();
 }
 
-function Section({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
+function Section({ title, count, children, collapsible }: { title: string; count: number; children: React.ReactNode; collapsible?: boolean }) {
+  const [open, setOpen] = useState(!collapsible);
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 border-b border-line pb-2">
+      <div
+        className={`flex items-center gap-2 border-b border-line pb-2 ${collapsible ? "cursor-pointer select-none" : ""}`}
+        onClick={collapsible ? () => setOpen((o) => !o) : undefined}
+      >
         <h2 className="text-sm font-semibold text-text">{title}</h2>
         <span className="text-xs bg-surface2 text-textdim px-2 py-0.5 rounded-full font-mono">{count}</span>
+        {collapsible && (
+          <svg className={`ml-auto w-3.5 h-3.5 text-textdim transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
       </div>
-      {children}
+      {open && children}
     </div>
   );
 }
@@ -241,7 +250,7 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
       </Section>
 
       {/* ── Ingestion Log ── */}
-      <Section title="Ingestion Log" count={data.ingest_log.length}>
+      <Section title="Ingestion Log" count={data.ingest_log.length} collapsible>
         {data.ingest_log.length === 0 ? (
           <p className="text-xs text-textdim">No ingestion events recorded yet. Index or upload a file to start logging.</p>
         ) : (
