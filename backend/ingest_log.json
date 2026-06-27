@@ -622,5 +622,11 @@
     "file": "diagram_hirth_scavenging_flow.txt",
     "chunks": 1,
     "source": "sources/"
+  },
+  {
+    "ts": 1782596886.5117025,
+    "file": "Zertifikate - digital.pdf",
+    "chunks": 3,
+    "source": "upload"
   }
 ]
