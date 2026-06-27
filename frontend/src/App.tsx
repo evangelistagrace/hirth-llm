@@ -30,6 +30,7 @@ function TabBar({ view, onSwitch }: { view: Tab; onSwitch: (v: Tab) => void }) {
   return (
     <div className="border-b border-line bg-surface/95 backdrop-blur z-50 shrink-0">
       <div className="max-w-3xl mx-auto px-4 py-3">
+        <div className="flex justify-center">
         <div className="flex bg-surface2 rounded-xl p-1 text-sm w-fit">
           {TABS.map((v) => (
             <button
@@ -42,6 +43,7 @@ function TabBar({ view, onSwitch }: { view: Tab; onSwitch: (v: Tab) => void }) {
               {TAB_LABELS[v]}
             </button>
           ))}
+        </div>
         </div>
       </div>
     </div>
@@ -232,6 +234,7 @@ export default function App() {
 
         <div className="sticky top-0 z-50 border-b border-line bg-surface/95 backdrop-blur">
           <div className="max-w-3xl mx-auto px-4 py-3">
+            <div className="flex justify-center">
             <div className="flex bg-surface2 rounded-xl p-1 text-sm w-fit">
               {TABS.map((v) => (
                 <button
@@ -244,6 +247,7 @@ export default function App() {
                   {TAB_LABELS[v]}
                 </button>
               ))}
+            </div>
             </div>
           </div>
         </div>
