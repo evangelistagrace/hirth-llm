@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import SourcePanel from "./components/SourcePanel";
-import UploadZone from "./components/UploadZone";
 import DocumentSearch from "./components/DocumentSearch";
 import FeedbackBar from "./components/FeedbackBar";
 import GraphView from "./components/GraphView";
@@ -26,7 +25,7 @@ export default function App() {
   const [sourceCount, setSourceCount] = useState<number | null>(null);
 
   // Lifted doc search state so it survives tab switches
-  type DocResult = { source: string; score: number; snippet: string; title_match?: boolean };
+  type DocResult = { source: string; score: number; snippet: string; title_match?: boolean; category?: string };
   const [docQuery, setDocQuery] = useState("");
   const [docResults, setDocResults] = useState<DocResult[]>([]);
   const [docSearched, setDocSearched] = useState(false);
@@ -114,7 +113,6 @@ export default function App() {
               AI-powered document retrieval for Hirth knowledge base
             </p>
           </div>
-          <UploadZone onIngested={fetchSourceCount} />
         </div>
 
         {/* Tab bar */}
@@ -248,7 +246,7 @@ export default function App() {
       {/* ── Admin view ── */}
       {view === "admin" && (
         <div className="flex-1 overflow-y-auto py-6">
-          <AdminView />
+          <AdminView onIngested={fetchSourceCount} />
         </div>
       )}
 

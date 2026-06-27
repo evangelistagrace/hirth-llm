@@ -7,6 +7,7 @@ type DocResult = {
   score: number;
   snippet: string;
   title_match?: boolean;
+  category?: string;
 };
 
 type Props = {
@@ -18,6 +19,16 @@ type Props = {
   searched: boolean;
   setSearched: (s: boolean) => void;
   searchTriggerRef?: React.MutableRefObject<(() => void) | null>;
+};
+
+const CATEGORIES = ["mechanics", "electrics", "simulation", "software", "other"] as const;
+
+const CATEGORY_COLORS: Record<string, string> = {
+  mechanics:   "bg-orange-900/50 text-orange-300 border-orange-800/50",
+  electrics:   "bg-yellow-900/50 text-yellow-300 border-yellow-800/50",
+  simulation:  "bg-blue-900/50 text-blue-300 border-blue-800/50",
+  software:    "bg-green-900/50 text-green-300 border-green-800/50",
+  other:       "bg-gray-700/60 text-gray-400 border-gray-600/50",
 };
 
 function fileType(name: string) {
@@ -38,6 +49,15 @@ function ScoreBadge({ score }: { score: number }) {
   );
 }
 
+function CategoryBadge({ category }: { category: string }) {
+  const cls = CATEGORY_COLORS[category] ?? CATEGORY_COLORS.other;
+  return (
+    <span className={`text-[11px] border px-2 py-0.5 rounded-md font-medium capitalize ${cls}`}>
+      {category}
+    </span>
+  );
+}
+
 export default function DocumentSearch({
   onAskAbout,
   query, setQuery,
@@ -46,20 +66,28 @@ export default function DocumentSearch({
   searchTriggerRef,
 }: Props) {
   const [searching, setSearching] = useState(false);
-
-  useEffect(() => {
-    if (searchTriggerRef) searchTriggerRef.current = search;
-  });
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [loadingSummary, setLoadingSummary] = useState<string | null>(null);
   const tokens = extractTokens(query);
 
-  async function search() {
+  function toggleCategory(cat: string) {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat); else next.add(cat);
+      return next;
+    });
+  }
+
+  async function search(cats?: Set<string>) {
     if (!query.trim()) return;
+    const activeCats = cats ?? selectedCategories;
     setSearching(true);
     setSearched(false);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&n=10`);
+      let url = `/api/search?q=${encodeURIComponent(query)}&n=10`;
+      if (activeCats.size > 0) url += `&categories=${[...activeCats].join(",")}`;
+      const res = await fetch(url);
       const data = await res.json();
       setResults(data.results);
       setSearched(true);
@@ -67,6 +95,10 @@ export default function DocumentSearch({
       setSearching(false);
     }
   }
+
+  useEffect(() => {
+    if (searchTriggerRef) searchTriggerRef.current = () => search();
+  });
 
   async function loadSummary(name: string) {
     if (summaries[name]) return;
@@ -81,7 +113,7 @@ export default function DocumentSearch({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5">
       {/* Search bar */}
       <div className="flex gap-2">
         <input
@@ -93,12 +125,43 @@ export default function DocumentSearch({
           onKeyDown={(e) => e.key === "Enter" && search()}
         />
         <button
-          onClick={search}
+          onClick={() => search()}
           disabled={searching || !query.trim()}
           className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-5 py-3 rounded-xl text-sm font-medium transition shrink-0"
         >
           {searching ? "Searching…" : "Search"}
         </button>
+      </div>
+
+      {/* Category filter chips */}
+      <div className="flex flex-wrap gap-2 items-center">
+        <span className="text-xs text-gray-500 shrink-0">Filter:</span>
+        <button
+          onClick={() => setSelectedCategories(new Set())}
+          className={`text-xs px-3 py-1 rounded-full border transition font-medium ${
+            selectedCategories.size === 0
+              ? "bg-indigo-600 border-indigo-500 text-white"
+              : "border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300"
+          }`}
+        >
+          All
+        </button>
+        {CATEGORIES.map((cat) => {
+          const active = selectedCategories.has(cat);
+          return (
+            <button
+              key={cat}
+              onClick={() => toggleCategory(cat)}
+              className={`text-xs px-3 py-1 rounded-full border transition font-medium capitalize ${
+                active
+                  ? `${CATEGORY_COLORS[cat]} border-current`
+                  : "border-gray-700 text-gray-400 hover:border-gray-500 hover:text-gray-300"
+              }`}
+            >
+              {cat}
+            </button>
+          );
+        })}
       </div>
 
       {/* Results */}
@@ -119,10 +182,11 @@ export default function DocumentSearch({
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                       <h3 className="text-sm font-semibold text-gray-100 break-words">{doc.source}</h3>
-                      <div className="flex items-center gap-2 mt-1.5">
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                         <span className="text-[11px] bg-gray-700 text-gray-300 px-2 py-0.5 rounded-md font-medium">
                           {fileType(doc.source)}
                         </span>
+                        {doc.category && <CategoryBadge category={doc.category} />}
                         {doc.title_match && (
                           <span className="text-[11px] bg-indigo-900/60 text-indigo-300 px-2 py-0.5 rounded-md font-medium">
                             title match
