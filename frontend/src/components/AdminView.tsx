@@ -249,39 +249,7 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
         )}
       </Section>
 
-      {/* ── Ingestion Log ── */}
-      <Section title="Ingestion Log" count={data.ingest_log.length} collapsible>
-        {data.ingest_log.length === 0 ? (
-          <p className="text-xs text-textdim">No ingestion events recorded yet. Index or upload a file to start logging.</p>
-        ) : (
-          <div className="rounded-xl overflow-hidden border border-line">
-            <table className="w-full text-xs">
-              <thead className="bg-surface2 text-textdim">
-                <tr>
-                  <th className="text-left px-4 py-2 font-medium">Time</th>
-                  <th className="text-left px-4 py-2 font-medium">File</th>
-                  <th className="text-left px-4 py-2 font-medium">Via</th>
-                  <th className="text-right px-4 py-2 font-medium">Chunks</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {[...data.ingest_log].reverse().map((e, i) => (
-                  <tr key={i} className="hover:bg-surface2/60 transition">
-                    <td className="px-4 py-2.5 text-textdim whitespace-nowrap font-mono">{ts(e.ts)}</td>
-                    <td className="px-4 py-2.5 text-text">{e.file}</td>
-                    <td className="px-4 py-2.5">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${e.source === "upload" ? "bg-accent/15 text-accent2" : "bg-surface2 text-textdim"}`}>
-                        {e.source}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 text-right text-textdim font-mono">{e.chunks}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Section>
+  
 
       {/* ── Feedback ── */}
       <Section title="User Feedback" count={data.feedback.length}>
