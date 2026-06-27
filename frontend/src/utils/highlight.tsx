@@ -27,7 +27,7 @@ export function Highlighted({ text, tokens }: { text: string; tokens: string[] }
     <>
       {parts.map((part, i) =>
         pattern.test(part) ? (
-          <mark key={i} className="bg-indigo-500/30 text-indigo-200 rounded px-0.5 not-italic">
+          <mark key={i} className="bg-accent/30 text-accent2 rounded px-0.5 not-italic">
             {part}
           </mark>
         ) : (

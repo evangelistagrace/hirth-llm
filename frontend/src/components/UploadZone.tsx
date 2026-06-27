@@ -44,19 +44,19 @@ export default function UploadZone({ onIngested }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-2 items-center">
-        <label className="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg cursor-pointer transition">
+        <label className="text-xs bg-surface2 hover:bg-line text-text px-3 py-1.5 rounded-lg cursor-pointer transition">
           Upload file
           <input type="file" className="hidden" onChange={handleFile} disabled={loading} accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.txt,.md" />
         </label>
         <button
           onClick={ingestSources}
           disabled={loading}
-          className="text-xs bg-indigo-700 hover:bg-indigo-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg transition"
+          className="text-xs bg-accent hover:bg-accent2 disabled:opacity-50 text-bg font-semibold px-3 py-1.5 rounded-lg transition"
         >
           {loading ? "Indexing…" : "Index sources/"}
         </button>
       </div>
-      {status && <p className="text-xs text-green-400">{status}</p>}
+      {status && <p className="text-xs text-data font-mono">{status}</p>}
     </div>
   );
 }

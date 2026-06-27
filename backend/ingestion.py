@@ -4,10 +4,12 @@ import textwrap
 from pathlib import Path
 from typing import Generator
 
+
 import cohere
 import chromadb
 from chromadb.config import Settings
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
