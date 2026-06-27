@@ -10,6 +10,7 @@ type Message = {
   content: string;
   sources?: Source[];
   groundingScore?: number | null;
+  question?: string;
 };
 
 export default function App() {
@@ -19,6 +20,12 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [validate, setValidate] = useState(false);
   const [sourceCount, setSourceCount] = useState<number | null>(null);
+
+  // Lifted doc search state so it survives tab switches
+  type DocResult = { source: string; score: number; snippet: string; title_match?: boolean };
+  const [docQuery, setDocQuery] = useState("");
+  const [docResults, setDocResults] = useState<DocResult[]>([]);
+  const [docSearched, setDocSearched] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,6 +67,7 @@ export default function App() {
           content: data.answer,
           sources: data.sources,
           groundingScore: data.grounding_score,
+          question: q,
         },
       ]);
     } catch {
@@ -153,6 +161,7 @@ export default function App() {
                       <SourcePanel
                         sources={msg.sources}
                         groundingScore={msg.groundingScore ?? null}
+                        query={msg.question}
                       />
                     )}
                   </div>
@@ -195,7 +204,15 @@ export default function App() {
       {/* ── Documents view ── */}
       {view === "docs" && (
         <div className="flex-1 overflow-y-auto py-6">
-          <DocumentSearch onAskAbout={handleAskAbout} />
+          <DocumentSearch
+            onAskAbout={handleAskAbout}
+            query={docQuery}
+            setQuery={setDocQuery}
+            results={docResults}
+            setResults={setDocResults}
+            searched={docSearched}
+            setSearched={setDocSearched}
+          />
         </div>
       )}
     </div>

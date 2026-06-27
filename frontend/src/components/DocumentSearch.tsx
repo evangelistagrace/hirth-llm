@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { extractTokens, Highlighted } from "../utils/highlight";
 
 type DocResult = {
   source: string;
@@ -9,6 +10,12 @@ type DocResult = {
 
 type Props = {
   onAskAbout: (question: string) => void;
+  query: string;
+  setQuery: (q: string) => void;
+  results: DocResult[];
+  setResults: (r: DocResult[]) => void;
+  searched: boolean;
+  setSearched: (s: boolean) => void;
 };
 
 function fileType(name: string) {
@@ -29,13 +36,16 @@ function ScoreBadge({ score }: { score: number }) {
   );
 }
 
-export default function DocumentSearch({ onAskAbout }: Props) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<DocResult[]>([]);
-  const [searched, setSearched] = useState(false);
+export default function DocumentSearch({
+  onAskAbout,
+  query, setQuery,
+  results, setResults,
+  searched, setSearched,
+}: Props) {
   const [searching, setSearching] = useState(false);
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [loadingSummary, setLoadingSummary] = useState<string | null>(null);
+  const tokens = extractTokens(query);
 
   async function search() {
     if (!query.trim()) return;
@@ -118,14 +128,16 @@ export default function DocumentSearch({ onAskAbout }: Props) {
 
                   {/* Snippet */}
                   <blockquote className="mt-4 border-l-2 border-indigo-500 pl-3 text-sm text-gray-400 leading-relaxed italic">
-                    {doc.snippet.trim().replace(/\s+/g, " ")}
-                    {doc.snippet.length >= 300 ? "…" : ""}
+                    <Highlighted
+                      text={doc.snippet.trim().replace(/\s+/g, " ") + (doc.snippet.length >= 300 ? "…" : "")}
+                      tokens={tokens}
+                    />
                   </blockquote>
 
                   {/* Summary */}
                   {summaries[doc.source] && (
                     <div className="mt-3 text-xs text-gray-300 bg-gray-900/50 rounded-xl px-4 py-3 leading-relaxed whitespace-pre-wrap">
-                      {summaries[doc.source]}
+                      <Highlighted text={summaries[doc.source]} tokens={tokens} />
                     </div>
                   )}
                   {loadingSummary === doc.source && (
@@ -133,7 +145,17 @@ export default function DocumentSearch({ onAskAbout }: Props) {
                   )}
 
                   {/* Actions */}
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex gap-2 mt-4 flex-wrap">
+                    <a
+                      href={`/api/sources/${encodeURIComponent(doc.source)}/download`}
+                      download={doc.source}
+                      className="text-xs border border-gray-600 hover:border-indigo-500 hover:text-indigo-300 text-gray-300 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      View Document
+                    </a>
                     <button
                       onClick={() => loadSummary(doc.source)}
                       disabled={!!summaries[doc.source] || loadingSummary === doc.source}
