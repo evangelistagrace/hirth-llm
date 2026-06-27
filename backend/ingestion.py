@@ -63,6 +63,21 @@ def _parse_image(path: Path) -> str:
     return pytesseract.image_to_string(img, lang="deu+eng")
 
 
+def _parse_pptx(path: Path) -> str:
+    from pptx import Presentation
+    prs = Presentation(str(path))
+    lines = []
+    for i, slide in enumerate(prs.slides, 1):
+        lines.append(f"[Slide {i}]")
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for para in shape.text_frame.paragraphs:
+                    text = para.text.strip()
+                    if text:
+                        lines.append(text)
+    return "\n".join(lines)
+
+
 def _parse_file(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".pdf":
@@ -71,12 +86,14 @@ def _parse_file(path: Path) -> str:
         return _parse_docx(path)
     elif suffix in (".xls", ".xlsx"):
         return _parse_xlsx(path)
+    elif suffix in (".ppt", ".pptx"):
+        return _parse_pptx(path)
     elif suffix in (".png", ".jpg", ".jpeg", ".tiff", ".bmp"):
         return _parse_image(path)
     elif suffix in (".txt", ".md"):
         return path.read_text(errors="replace")
     else:
-        return ""  # skip .url and unknown types
+        return ""
 
 
 # ── Chunking ───────────────────────────────────────────────────────────────────
@@ -183,7 +200,7 @@ def ingest_file(path: Path) -> int:
 def ingest_directory(directory: Path) -> dict[str, int]:
     """Ingest all supported files in a directory."""
     results = {}
-    supported = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".png", ".jpg", ".jpeg", ".txt", ".md"}
+    supported = {".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".png", ".jpg", ".jpeg", ".txt", ".md"}
     for path in sorted(directory.iterdir()):
         if path.suffix.lower() in supported:
             count = ingest_file(path)

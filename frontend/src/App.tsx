@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import SourcePanel from "./components/SourcePanel";
 import DocumentSearch from "./components/DocumentSearch";
 import FeedbackBar from "./components/FeedbackBar";
@@ -144,7 +146,7 @@ export default function App() {
                 ) : (
                   <div className="max-w-[90%]">
                     <div className="bg-gray-800 rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-1.5 prose-li:my-0.5 prose-headings:text-gray-100 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1 prose-strong:text-gray-200 prose-code:text-indigo-300 prose-code:bg-gray-900 prose-code:px-1 prose-code:rounded prose-ol:pl-4 prose-ul:pl-4">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.content}</ReactMarkdown>
                     </div>
                     {msg.sources && (
                       <SourcePanel
