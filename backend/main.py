@@ -1,6 +1,15 @@
 import shutil
+import json
+import time
 from pathlib import Path
 from typing import Optional
+
+INGEST_LOG_PATH = Path(__file__).parent / "ingest_log.json"
+
+def _append_log(entry: dict):
+    log = json.loads(INGEST_LOG_PATH.read_text()) if INGEST_LOG_PATH.exists() else []
+    log.append(entry)
+    INGEST_LOG_PATH.write_text(json.dumps(log, indent=2))
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
@@ -9,6 +18,7 @@ from pydantic import BaseModel
 
 from ingestion import ingest_file, ingest_directory, get_collection
 from rag import chat, validate_answer, summarize_document
+from feedback import save_feedback, get_all_feedback, compute_source_multipliers
 
 app = FastAPI(title="Hirth RAG API")
 
@@ -30,6 +40,14 @@ class ChatRequest(BaseModel):
     question: str
     history: Optional[list[dict]] = None
     validate: bool = False
+
+
+class FeedbackRequest(BaseModel):
+    question: str
+    answer: str
+    sources: list[dict]
+    rating: int          # +1 thumbs-up, -1 thumbs-down
+    reason: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
@@ -64,6 +82,8 @@ async def ingest_sources():
         raise HTTPException(status_code=404, detail="sources/ directory not found")
     results = ingest_directory(SOURCES_DIR)
     total = sum(results.values())
+    for filename, chunks in results.items():
+        _append_log({"ts": time.time(), "file": filename, "chunks": chunks, "source": "sources/"})
     return {"ingested": results, "total_chunks": total}
 
 
@@ -74,7 +94,29 @@ async def ingest_upload(file: UploadFile = File(...)):
     with dest.open("wb") as f:
         shutil.copyfileobj(file.file, f)
     count = ingest_file(dest)
+    _append_log({"ts": time.time(), "file": file.filename, "chunks": count, "source": "upload"})
     return {"file": file.filename, "chunks": count}
+
+
+@app.get("/admin")
+async def admin_data():
+    """Aggregate data for the admin panel."""
+    # ingestion log
+    log = json.loads(INGEST_LOG_PATH.read_text()) if INGEST_LOG_PATH.exists() else []
+
+    # knowledge base files
+    collection = get_collection()
+    meta_result = collection.get(include=["metadatas"])
+    sources: dict[str, int] = {}
+    for m in meta_result["metadatas"]:
+        src = m.get("source", "unknown")
+        sources[src] = sources.get(src, 0) + 1
+    kb_files = [{"name": k, "chunks": v} for k, v in sorted(sources.items())]
+
+    # feedback
+    feedback = get_all_feedback()
+
+    return {"ingest_log": log, "kb_files": kb_files, "feedback": feedback}
 
 
 @app.get("/sources")
@@ -152,6 +194,11 @@ async def search_documents(q: str, n: int = 10):
         if src not in snippets:
             snippets[src] = chunk["text"][:300]
 
+    # ── Feedback multipliers from similar past queries ────────────────────────
+    from ingestion import _embed as _emb
+    q_embedding = _emb([q], input_type="search_query")[0]
+    feedback_multipliers = compute_source_multipliers(q_embedding)
+
     # ── RRF fusion ────────────────────────────────────────────────────────────
     rrf_scores: dict[str, float] = {}
     for ranked_list, weight in [
@@ -161,6 +208,11 @@ async def search_documents(q: str, n: int = 10):
     ]:
         for rank, src in enumerate(ranked_list):
             rrf_scores[src] = rrf_scores.get(src, 0.0) + weight / (RRF_K + rank + 1)
+
+    # apply feedback boosts/penalties
+    for src in rrf_scores:
+        if src in feedback_multipliers:
+            rrf_scores[src] *= feedback_multipliers[src]
 
     if not rrf_scores:
         return {"results": [], "query": q}
@@ -208,6 +260,70 @@ async def document_summary(name: str):
     chunks = result["documents"][:20]  # cap context
     summary = summarize_document(name, chunks)
     return {"source": name, "summary": summary}
+
+
+@app.get("/graph")
+async def knowledge_graph(threshold: float = 0.45):
+    """
+    Build a document similarity graph from chunk embeddings already in ChromaDB.
+    Returns nodes (documents) and edges (similarity >= threshold).
+    """
+    import numpy as np
+    collection = get_collection()
+    data = collection.get(include=["embeddings", "metadatas"])
+
+    if data["embeddings"] is None or len(data["embeddings"]) == 0:
+        return {"nodes": [], "edges": []}
+
+    # average chunk embeddings per document
+    doc_vecs: dict[str, list] = {}
+    doc_chunks: dict[str, int] = {}
+    for emb, meta in zip(data["embeddings"], data["metadatas"]):
+        src = meta.get("source", "unknown")
+        doc_vecs.setdefault(src, []).append(emb)
+        doc_chunks[src] = doc_chunks.get(src, 0) + 1
+
+    avg_vecs = {src: np.mean(vecs, axis=0) for src, vecs in doc_vecs.items()}
+    sources = list(avg_vecs.keys())
+
+    # cosine similarity between every pair
+    def cosine(a, b):
+        return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-10))
+
+    edges = []
+    for i in range(len(sources)):
+        for j in range(i + 1, len(sources)):
+            sim = cosine(avg_vecs[sources[i]], avg_vecs[sources[j]])
+            if sim >= threshold:
+                edges.append({
+                    "source": sources[i],
+                    "target": sources[j],
+                    "similarity": round(sim, 3),
+                })
+
+    nodes = [
+        {
+            "id": src,
+            "chunks": doc_chunks[src],
+            "ext": src.rsplit(".", 1)[-1].upper() if "." in src else "FILE",
+        }
+        for src in sources
+    ]
+
+    return {"nodes": nodes, "edges": edges}
+
+
+@app.post("/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    if req.rating not in (1, -1):
+        raise HTTPException(status_code=400, detail="rating must be +1 or -1")
+    save_feedback(req.question, req.answer, req.sources, req.rating, req.reason)
+    return {"status": "saved"}
+
+
+@app.get("/feedback")
+async def list_feedback():
+    return {"feedback": get_all_feedback()}
 
 
 @app.get("/health")

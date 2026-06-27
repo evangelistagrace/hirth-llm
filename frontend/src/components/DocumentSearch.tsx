@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { extractTokens, Highlighted } from "../utils/highlight";
+import FeedbackBar from "./FeedbackBar";
 
 type DocResult = {
   source: string;
@@ -16,6 +17,7 @@ type Props = {
   setResults: (r: DocResult[]) => void;
   searched: boolean;
   setSearched: (s: boolean) => void;
+  searchTriggerRef?: React.MutableRefObject<(() => void) | null>;
 };
 
 function fileType(name: string) {
@@ -41,8 +43,13 @@ export default function DocumentSearch({
   query, setQuery,
   results, setResults,
   searched, setSearched,
+  searchTriggerRef,
 }: Props) {
   const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (searchTriggerRef) searchTriggerRef.current = search;
+  });
   const [summaries, setSummaries] = useState<Record<string, string>>({});
   const [loadingSummary, setLoadingSummary] = useState<string | null>(null);
   const tokens = extractTokens(query);
@@ -80,7 +87,7 @@ export default function DocumentSearch({
         <input
           type="text"
           className="flex-1 bg-gray-800 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500"
-          placeholder="Search documents — by meaning or keyword…"
+          placeholder='e.g. "fuel mixture adjustment" or FAR33'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && search()}
@@ -159,17 +166,24 @@ export default function DocumentSearch({
                     <button
                       onClick={() => loadSummary(doc.source)}
                       disabled={!!summaries[doc.source] || loadingSummary === doc.source}
-                      className="text-xs border border-gray-600 hover:border-indigo-500 hover:text-indigo-300 text-gray-300 px-3 py-1.5 rounded-lg transition disabled:opacity-40"
+                      className="text-xs border border-gray-600 hover:border-indigo-500 hover:text-indigo-300 text-gray-300 px-3 py-1.5 rounded-lg transition disabled:opacity-40 flex items-center gap-1.5"
                     >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
                       {summaries[doc.source] ? "Summary loaded" : "Summarize"}
                     </button>
                     <button
                       onClick={() => onAskAbout(`What does ${doc.source} say about: ${query}`)}
-                      className="text-xs border border-gray-600 hover:border-indigo-500 hover:text-indigo-300 text-gray-300 px-3 py-1.5 rounded-lg transition"
+                      className="text-xs border border-gray-600 hover:border-indigo-500 hover:text-indigo-300 text-gray-300 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
                     >
-                      Ask Chatbot About This
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                      </svg>
+                      Ask Chat
                     </button>
                   </div>
+                  <FeedbackBar mode="document" question={query} source={doc.source} />
                 </div>
               ))}
             </div>
@@ -178,9 +192,7 @@ export default function DocumentSearch({
       )}
 
       {!searched && !searching && (
-        <div className="text-center text-gray-600 py-16 text-sm">
-          Search across all indexed documents using hybrid semantic + keyword retrieval.
-        </div>
+        <div className="py-10" />
       )}
     </div>
   );
