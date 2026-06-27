@@ -209,7 +209,6 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
                   <th className="text-left px-4 py-2 font-medium">File</th>
                   <th className="text-left px-4 py-2 font-medium">Type</th>
                   <th className="text-left px-4 py-2 font-medium">Category</th>
-                  <th className="text-right px-4 py-2 font-medium">Chunks</th>
                   <th className="px-4 py-2" />
                 </tr>
               </thead>
@@ -229,7 +228,6 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
                         {cat}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-right text-textdim font-mono">{f.chunks}</td>
                     <td className="px-4 py-2.5 text-right">
                       <button
                         onClick={() => deleteFile(f.name)}
