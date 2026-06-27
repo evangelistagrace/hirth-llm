@@ -189,8 +189,11 @@ export default function App() {
 
       {/* ── Documents view ── */}
       {view === "docs" && (
-        <div className="py-6">
-          <DocumentSearch
+    <div
+        className="py-6"
+        style={{ minHeight: "calc(100vh - 70px)" }}
+    >
+        <DocumentSearch
             onAskAbout={handleAskAbout}
             query={docQuery}
             setQuery={setDocQuery}
@@ -200,8 +203,8 @@ export default function App() {
             setSearched={setDocSearched}
             searchTriggerRef={docSearchTriggerRef}
           />
-        </div>
-      )}
+    </div>
+)}
 
       {/* ── Admin view ── */}
       {view === "admin" && (
