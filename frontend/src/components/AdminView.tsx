@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import UploadZone from "./UploadZone";
 import { categoryClass, categoryHex, fileTypeColor } from "../utils/colors";
-
+import { Trash2 } from "lucide-react";
 type LogEntry   = { ts: number; file: string; chunks: number; source: string };
 type KBFile     = { name: string; chunks: number; category?: string };
 type Feedback   = { id: string; ts: number; question: string; answer: string; sources: string[]; rating: number; reason: string | null };
@@ -356,14 +356,18 @@ export default function AdminView({ onIngested }: { onIngested: () => void }) {
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      <button
-                        onClick={() => deleteFile(f.name)}
-                        disabled={deleting === f.name}
-                        className="text-warn/60 hover:text-warn disabled:opacity-40 transition text-[10px] font-mono px-2 py-0.5 rounded hover:bg-warn/10"
-                        title="Remove from index"
-                      >
-                        {deleting === f.name ? "…" : "remove"}
-                      </button>
+                   <button
+  onClick={() => deleteFile(f.name)}
+  disabled={deleting === f.name}
+  className="text-warn/60 hover:text-warn disabled:opacity-40 transition p-1.5 rounded hover:bg-warn/10"
+  title="Remove from index"
+>
+  {deleting === f.name ? (
+    <span className="text-[10px] font-mono">…</span>
+  ) : (
+    <Trash2 size={14} strokeWidth={2} />
+  )}
+</button>
                     </td>
                   </tr>
                   );
