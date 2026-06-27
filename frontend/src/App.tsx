@@ -210,7 +210,7 @@ export default function App() {
 
       {/* ── Graph view ── */}
       {view === "graph" && (
-        <div className="py-6 flex flex-col" style={{ minHeight: "calc(100vh - 58vh - 70px)" }}>
+        <div className="py-6 flex flex-col" style={{ height: "calc(100vh - 120px)" }}>
           <GraphView onSelectDocument={handleGraphNodeClick} />
         </div>
       )}
