@@ -4,11 +4,11 @@
 // each had their own slightly different hex maps).
 
 export const CATEGORY_HEX: Record<string, string> = {
-  mechanics: "#C2783A",   // copper
-  electrics: "#D4B23C",   // muted gold
-  simulation: "#8C8FE0",  // soft indigo-violet
-  software: "#5FAE7C",    // muted green
-  other: "#8D9097",       // neutral steel
+  mechanics: "#7A1F2B",    // Burgundy
+  electrics: "#A67C52",    // Bronze
+  simulation: "#4A6FA5",   // Slate Blue
+  software: "#3E7C59",     // Forest Green
+  other: "#6E6E6E",        // Neutral Grey
 };
 
 export const CATEGORY_CLASS: Record<string, string> = {

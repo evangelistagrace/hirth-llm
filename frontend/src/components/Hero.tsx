@@ -34,30 +34,41 @@ export default function Hero({ sourceCount }: Props) {
           className="absolute inset-0 w-full h-full object-cover object-[80%_center]"
           src="/hero-engine.mp4"
           poster="/hero-poster.webp"
-          autoPlay
-          loop
           muted
-          playsInline
+          loop={true}
+          playsInline 
           preload="auto"
           aria-hidden="true"
         />
       )}
 
       {/* Grounding gradient so overlaid text stays legible regardless of where parts land */}
-      <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/30 to-bg/10" />
-      <div className="absolute inset-0 bg-gradient-to-r from-bg/70 via-transparent to-bg/40" />
+      <div className="absolute inset-0 bg-black/45" />
+
+      <div className="absolute inset-0 bg-gradient-to-r
+          from-black/70
+          via-black/30
+          to-transparent" />
 
       <div className="relative h-full max-w-7xl mx-auto pl-8 pr-16 flex flex-col justify-center">
-        <div className="animate-rise-in motion-safe-only">
-          <p className="font-mono text-[11px] tracking-[0.2em] text-accent2 uppercase mb-2">
+        <div className="animate-rise-in
+            motion-safe-only
+
+            max-w-xl
+
+            rounded-3xl
+
+            "
+            >
+          <p className="font-mono text-[11px] tracking-[0.2em] uppercase mb-2 text-[#E8A0AC]">
             Two-Stroke Aviation Engines
           </p>
           <h1 className="leading-[0.9] font-bold uppercase">
-            <span className="block text-[55px] sm:text-[70px] font-light text-[#8BB7FF]">
+            <span className="block text-[55px] sm:text-[70px] text-white">
               HIRTH
             </span>
 
-            <span className="block text-[55px] sm:text-[70px] font-extrabold text-[#3D84E6]">
+            <span className="block text-[55px] sm:text-[70px] font-extrabold text-white">
               DOCUMENT
             </span>
 
@@ -65,7 +76,7 @@ export default function Hero({ sourceCount }: Props) {
               INTELLIGENCE
             </span>
           </h1>
-          <p className="text-sm text-textdim mt-2 max-w-md">
+          <p className="text-sm mt-2 max-w-md text-white/80">
             AI-powered document retrieval for Hirth knowledge base
           </p>
         </div>

@@ -4,17 +4,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        bg: "#070C14",
-        surface: "#0B1729",
-        surface2: "#142840",
-        line: "#2D5A90",
-        accent: "#3878C8",
-        accent2: "#5B95DC",
-        data: "#7AA8E0",
+        bg: "#06090F",
+        surface: "#0A1828",
+        surface2: "#0F2035",
+        line: "#162540",
+        accent: "#5FC9C2",
+        accent2: "#7DDAD3",
+        data: "#7AB8E0",
+        muted: "#2D6070",
         warn: "#C25450",
         good: "#5FAE7C",
-        text: "#EDF2FA",
-        textdim: "#6B86A8",
+        text: "#E3EEF7",
+        textdim: "#5C7891",
       },
       fontFamily: {
         sans: ["IBM Plex Sans", "system-ui", "sans-serif"],
