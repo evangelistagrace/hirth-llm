@@ -68,7 +68,7 @@ export default function GraphView({ onSelectDocument }: Props) {
                 label: "data(label)",
                 "font-size": 10,
                 "font-family": "IBM Plex Mono, monospace",
-                color: "#EDF2FA",
+                color: "#C9B89A",
                 "text-valign": "bottom",
                 "text-halign": "center",
                 "text-margin-y": 4,
@@ -162,7 +162,7 @@ export default function GraphView({ onSelectDocument }: Props) {
   }, [threshold]);
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex flex-col gap-4">
       {/* Controls */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 text-xs text-textdim">
@@ -186,7 +186,7 @@ export default function GraphView({ onSelectDocument }: Props) {
       </div>
 
       {/* Graph */}
-      <div className="flex-1 relative rounded-2xl overflow-hidden bg-surface border border-line" style={{ minHeight: 420 }}>
+      <div className="relative rounded-2xl overflow-hidden bg-surface border border-line" style={{ height: 520 }}>
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center text-sm text-textdim z-10">
             Building graph…

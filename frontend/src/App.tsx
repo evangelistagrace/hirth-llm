@@ -116,7 +116,7 @@ export default function App() {
   }
 
   return (
-    <div className="bg-bg">
+    <div className="bg-bg font-sans">
 
       {/* ── Hero — normal page flow, scrolls away like any other content ── */}
       <Hero sourceCount={sourceCount} scrollToChat={() => switchView("chat")} />
