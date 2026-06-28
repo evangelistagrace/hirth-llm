@@ -62,7 +62,10 @@ def chat(question: str, history: list[dict] | None = None) -> dict:
     )
 
     answer = response.choices[0].message.content or ""
+    from document_quality import get_warnings_for_source
 
+    for chunk in chunks:
+        chunk["warnings"] = get_warnings_for_source(chunk.get("source", ""))
     return {
         "answer": answer,
         "sources": chunks,
