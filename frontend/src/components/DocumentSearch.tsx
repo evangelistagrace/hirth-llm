@@ -3,12 +3,22 @@ import { extractTokens, Highlighted } from "../utils/highlight";
 import FeedbackBar from "./FeedbackBar";
 import { categoryClass } from "../utils/colors";
 
+type QualityWarning = {
+  id: string;
+  type: "duplicate" | "conflict";
+  severity: "low" | "medium" | "high";
+  message: string;
+  documents: string[];
+  similarity?: number;
+};
+
 type DocResult = {
   source: string;
   score: number;
   snippet: string;
   title_match?: boolean;
   category?: string;
+  warnings?: QualityWarning[];
 };
 
 type Props = {
@@ -209,7 +219,42 @@ export default function DocumentSearch({
                     </div>
                     <ScoreBadge score={doc.score} />
                   </div>
+                    {doc.warnings && doc.warnings.length > 0 && (
+  <div className="mt-3 space-y-2">
+    {doc.warnings.map((warning) => (
+      <div
+        key={warning.id}
+        className={`rounded-xl border px-3 py-2 text-xs ${
+          warning.type === "conflict"
+            ? "border-red-700/60 bg-red-950/30 text-red-200"
+            : "border-yellow-700/60 bg-yellow-950/30 text-yellow-200"
+        }`}
+      >
+        <div className="font-semibold uppercase tracking-wide">
+          {warning.type === "conflict"
+            ? "Possible contradiction"
+            : "Possible duplicate"}
+        </div>
 
+        <p className="mt-1">{warning.message}</p>
+
+        <p className="mt-1 text-[11px] opacity-80">
+          Related documents: {warning.documents.join(" ↔ ")}
+        </p>
+
+        {warning.similarity !== undefined && (
+          <p className="mt-1 text-[11px] opacity-70">
+            Similarity: {Math.round(warning.similarity * 100)}%
+          </p>
+        )}
+
+        <p className="mt-1 text-[11px] opacity-80">
+          Please verify which document is correct before relying on this information.
+        </p>
+      </div>
+    ))}
+  </div>
+)}
                   {/* Snippet */}
                   <blockquote className="mt-4 border-l-2 border-accent pl-3 text-sm text-textdim leading-relaxed italic">
                     <Highlighted

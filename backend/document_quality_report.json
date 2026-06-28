@@ -1,0 +1,32 @@
+{
+  "generated_at": 1782606589.695948,
+  "document_count": 15,
+  "issue_count": 1,
+  "issues": [
+    {
+      "type": "duplicate",
+      "severity": "medium",
+      "status": "needs_review",
+      "documents": [
+        "conflict_test_A.txt",
+        "conflict_test_B.txt"
+      ],
+      "categories": [
+        "mechanics",
+        "mechanics"
+      ],
+      "similarity": 0.9767,
+      "message": "These documents look like duplicates or near-duplicates.",
+      "evidence": {
+        "doc_a_snippet": "ï»¿Engine endurance test requirement: The engine must complete 150 hours of endurance testing. Maximum exhaust temperature is 650Â°C.",
+        "doc_b_snippet": "ï»¿Engine endurance test requirement: The engine must complete 120 hours of endurance testing. Maximum exhaust temperature is 720Â°C.",
+        "shared_values": []
+      },
+      "verified_correct": null,
+      "verified_incorrect": null,
+      "review_note": null,
+      "created_at": 1782606589.6959414,
+      "id": "issue_1"
+    }
+  ]
+}

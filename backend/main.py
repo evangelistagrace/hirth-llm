@@ -3,6 +3,14 @@ import json
 import time
 from pathlib import Path
 from typing import Optional
+from document_quality import (
+    generate_quality_report,
+    get_quality_report,
+    get_warnings_for_source,
+    review_quality_issue,
+    delete_reviewed_incorrect_document,
+)
+from pydantic import BaseModel
 
 INGEST_LOG_PATH = Path(__file__).parent / "ingest_log.json"
 REVIEW_QUEUE_PATH = Path(__file__).parent / "review_queue.json"
@@ -48,6 +56,10 @@ class ChatRequest(BaseModel):
     history: Optional[list[dict]] = None
     validate: bool = False
 
+class QualityReviewRequest(BaseModel):
+    correct_source: str
+    incorrect_source: str
+    note: Optional[str] = None
 
 class FeedbackRequest(BaseModel):
     question: str
@@ -319,19 +331,20 @@ async def search_documents(q: str, n: int = 10, categories: Optional[str] = None
 
     max_rrf = max(rrf_scores.values())
     results = sorted(
-        [
-            {
-                "source": src,
-                "score": round(score / max_rrf, 4),
-                "snippet": snippets.get(src, ""),
-                "title_match": src in title_matches,
-                "category": src_category.get(src, "other"),
-            }
-            for src, score in rrf_scores.items()
-        ],
-        key=lambda d: d["score"],
-        reverse=True,
-    )[:n]
+    [
+        {
+            "source": src,
+            "score": round(score / max_rrf, 4),
+            "snippet": snippets.get(src, ""),
+            "title_match": src in title_matches,
+            "category": src_category.get(src, "other"),
+            "warnings": get_warnings_for_source(src),
+        }
+        for src, score in rrf_scores.items()
+    ],
+    key=lambda d: d["score"],
+    reverse=True,
+)[:n]
 
     return {"results": results, "query": q}
 
@@ -426,7 +439,71 @@ async def submit_feedback(req: FeedbackRequest):
 async def list_feedback():
     return {"feedback": get_all_feedback()}
 
+@app.post("/quality/scan")
+async def scan_document_quality():
+    """
+    Scan indexed documents for duplicates and possible contradictions.
+    """
+    report = generate_quality_report()
+    return report
 
+
+@app.get("/quality/issues")
+async def list_quality_issues():
+    """
+    List duplicate/conflict issues.
+    """
+    return get_quality_report()
+
+
+@app.get("/quality/warnings/{source_name}")
+async def source_quality_warnings(source_name: str):
+    """
+    Return warnings for one document/source.
+    """
+    return {
+        "source": source_name,
+        "warnings": get_warnings_for_source(source_name),
+    }
+
+
+@app.post("/quality/issues/{issue_id}/review")
+async def review_issue(issue_id: str, req: QualityReviewRequest):
+    """
+    Mark which document is correct and which one should later be removed.
+    """
+    try:
+        issue = review_quality_issue(
+            issue_id=issue_id,
+            correct_source=req.correct_source,
+            incorrect_source=req.incorrect_source,
+            note=req.note,
+        )
+        return {"status": "reviewed", "issue": issue}
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Issue not found")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/quality/issues/{issue_id}/delete-incorrect")
+async def delete_incorrect_document(issue_id: str):
+    """
+    Delete the reviewed incorrect document from ChromaDB and sources folder.
+    """
+    try:
+        result = delete_reviewed_incorrect_document(
+            issue_id=issue_id,
+            sources_dir=SOURCES_DIR,
+        )
+        return result
+
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Issue not found")
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
